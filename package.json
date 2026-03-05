@@ -1,0 +1,99 @@
+{
+  "name": "@mapbox/mcp-docs-server",
+  "version": "0.1.0",
+  "description": "Mapbox MCP documentation server",
+  "mcpName": "io.github.mapbox/mcp-docs-server",
+  "main": "./dist/commonjs/index.js",
+  "module": "./dist/esm/index.js",
+  "type": "module",
+  "bin": {
+    "mapbox-mcp-docs": "dist/esm/index.js"
+  },
+  "scripts": {
+    "build": "npm run prepare && tshy && npm run generate-version && node scripts/add-shebang.cjs",
+    "format": "prettier --check \"./src/**/*.{ts,tsx,js,json,md}\"",
+    "format:fix": "prettier --write \"./src/**/*.{ts,tsx,js,json,md}\"",
+    "generate-version": "node scripts/build-helpers.cjs generate-version",
+    "inspect:build": "npm run build && npx @modelcontextprotocol/inspector node dist/esm/index.js",
+    "inspect:dev": "npx @modelcontextprotocol/inspector npx -y tsx src/index.ts",
+    "lint": "eslint \"./src/**/*.{ts,tsx}\" \"./test/**/*.{ts,tsx}\" --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint \"./src/**/*.{ts,tsx}\" \"./test/**/*.{ts,tsx}\" --no-error-on-unmatched-pattern --fix",
+    "prepare": "husky && node .husky/setup-hooks.js",
+    "spellcheck": "cspell \"*.md\" \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "vitest"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "eslint --fix",
+    "*.{js,jsx,ts,tsx,md,html,css}": "prettier --write"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/mapbox/mcp-docs-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mapbox/mcp-docs-server.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "mcp",
+    "mapbox",
+    "documentation"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.25.42"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-istanbul": "^3.2.4",
+    "cspell": "^9.2.1",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^17.21.3",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-unused-imports": "^4.2.0",
+    "globals": "^16.3.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^16.1.0",
+    "prettier": "^3.0.0",
+    "tshy": "^3.0.2",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.42.0",
+    "vitest": "^3.2.4"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "none"
+  },
+  "tshy": {
+    "project": "./tsconfig.src.json",
+    "exports": {
+      ".": "./src/index.ts"
+    },
+    "dialects": [
+      "esm",
+      "commonjs"
+    ],
+    "selfLink": false
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    }
+  },
+  "types": "./dist/commonjs/index.d.ts"
+}
