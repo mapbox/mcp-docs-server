@@ -74,7 +74,9 @@ export class MapboxDocumentationResource extends BaseResource {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to fetch Mapbox documentation: ${errorMessage}`);
+      throw new Error(`Failed to fetch Mapbox documentation: ${errorMessage}`, {
+        cause: error
+      });
     }
   }
 }

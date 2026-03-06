@@ -74,7 +74,9 @@ export class MapboxSdkDocsResource extends BaseResource {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to fetch Mapbox SDK docs: ${errorMessage}`);
+      throw new Error(`Failed to fetch Mapbox SDK docs: ${errorMessage}`, {
+        cause: error
+      });
     }
   }
 }

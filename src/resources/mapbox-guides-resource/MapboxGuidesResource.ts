@@ -74,7 +74,9 @@ export class MapboxGuidesResource extends BaseResource {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to fetch Mapbox guides: ${errorMessage}`);
+      throw new Error(`Failed to fetch Mapbox guides: ${errorMessage}`, {
+        cause: error
+      });
     }
   }
 }
