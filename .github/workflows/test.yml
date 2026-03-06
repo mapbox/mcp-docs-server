@@ -29,6 +29,9 @@ jobs:
       - name: Check formatting
         run: npm run format
 
+      - name: Spellcheck
+        run: npm run spellcheck
+
       - name: Compile typescript
         run: npm run build
 

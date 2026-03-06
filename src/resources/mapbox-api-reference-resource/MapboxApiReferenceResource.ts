@@ -74,7 +74,9 @@ export class MapboxApiReferenceResource extends BaseResource {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error occurred';
-      throw new Error(`Failed to fetch Mapbox API reference: ${errorMessage}`);
+      throw new Error(`Failed to fetch Mapbox API reference: ${errorMessage}`, {
+        cause: error
+      });
     }
   }
 }
