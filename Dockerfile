@@ -3,6 +3,7 @@ FROM node:22-slim AS builder
 WORKDIR /app
 
 COPY package*.json ./
+ENV HUSKY=0
 RUN npm ci
 
 COPY . .
@@ -15,6 +16,7 @@ WORKDIR /app
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
+ENV HUSKY=0
 RUN npm ci --omit=dev
 
 USER node
