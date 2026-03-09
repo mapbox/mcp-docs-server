@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Fix transient memory amplification in `batch_get_documents_tool` (#4)
+
+- Deduplicate intra-batch URLs by normalized key: multiple input URLs that resolve to the same page (e.g. cache-busting query params) now share a single HTTP request and a single buffered body instead of each triggering a separate fetch
+- Add streaming response body size cap via `readBodyWithLimit`: aborts reads that exceed 2 MB before the full body is buffered; also rejects on `Content-Length` before reading begins
+- Apply the same body size cap to `get_document_tool`
+
 ### Fix unbounded cache growth in `DocCache` (#2)
 
 - Added a 512-entry LRU eviction limit to prevent unbounded Map growth

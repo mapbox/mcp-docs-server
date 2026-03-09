@@ -2,7 +2,12 @@
 // Licensed under the MIT License.
 
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { docCache } from '../../utils/docCache.js';
+import {
+  docCache,
+  normalizeCacheKey,
+  MAX_ENTRY_BYTES,
+  readBodyWithLimit
+} from '../../utils/docCache.js';
 import type { HttpRequest } from '../../utils/types.js';
 import { BaseTool } from '../BaseTool.js';
 import {
@@ -60,13 +65,20 @@ export class BatchGetDocumentsTool extends BaseTool<
       };
     }
 
-    const results = await Promise.allSettled(
-      input.urls.map(async (url): Promise<DocumentResult> => {
-        const cached = docCache.get(url);
-        if (cached !== null) {
-          return { url, content: cached };
-        }
+    // One in-flight fetch per unique normalized URL. Multiple input URLs that
+    // normalize to the same key (e.g. cache-busting query params) share a
+    // single HTTP request and a single buffered body.
+    const inflightByKey = new Map<string, Promise<string>>();
 
+    const fetchOne = (url: string): Promise<string> => {
+      const cached = docCache.get(url);
+      if (cached !== null) return Promise.resolve(cached);
+
+      const key = normalizeCacheKey(url);
+      const existing = inflightByKey.get(key);
+      if (existing) return existing;
+
+      const promise = (async () => {
         const response = await this.httpRequest(url, {
           headers: { Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8' }
         });
@@ -75,8 +87,18 @@ export class BatchGetDocumentsTool extends BaseTool<
           throw new Error(`${response.status} ${response.statusText}`);
         }
 
-        const content = await response.text();
+        const content = await readBodyWithLimit(response, MAX_ENTRY_BYTES);
         docCache.set(url, content);
+        return content;
+      })();
+
+      inflightByKey.set(key, promise);
+      return promise;
+    };
+
+    const results = await Promise.allSettled(
+      input.urls.map(async (url): Promise<DocumentResult> => {
+        const content = await fetchOne(url);
         return { url, content };
       })
     );

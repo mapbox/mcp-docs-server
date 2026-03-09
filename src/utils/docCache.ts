@@ -8,7 +8,7 @@ const DEFAULT_TTL_MS = parseInt(
 
 // Cache limits
 const MAX_ENTRIES = 512;
-const MAX_ENTRY_BYTES = 2 * 1024 * 1024; // 2 MB per entry
+export const MAX_ENTRY_BYTES = 2 * 1024 * 1024; // 2 MB per entry
 const MAX_TOTAL_BYTES = 50 * 1024 * 1024; // 50 MB total
 
 interface CacheEntry {
@@ -104,3 +104,51 @@ class DocCache {
 }
 
 export const docCache = new DocCache();
+
+/**
+ * Read a Response body up to `maxBytes`, aborting early if the limit is
+ * exceeded. Checks Content-Length first when present so no bytes are
+ * buffered for obviously-oversized responses.
+ */
+export async function readBodyWithLimit(
+  response: Response,
+  maxBytes: number
+): Promise<string> {
+  const contentLength = response.headers.get('content-length');
+  if (contentLength) {
+    const cl = parseInt(contentLength, 10);
+    if (Number.isFinite(cl) && cl > maxBytes) {
+      throw new Error(
+        `Response too large: Content-Length ${cl} exceeds limit of ${maxBytes} bytes`
+      );
+    }
+  }
+
+  if (!response.body) {
+    const text = await response.text();
+    if (Buffer.byteLength(text, 'utf8') > maxBytes) {
+      throw new Error('Response too large');
+    }
+    return text;
+  }
+
+  const chunks: Buffer[] = [];
+  let totalBytes = 0;
+  const reader = response.body.getReader();
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBytes) {
+        throw new Error('Response too large');
+      }
+      chunks.push(Buffer.from(value));
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return Buffer.concat(chunks).toString('utf8');
+}
