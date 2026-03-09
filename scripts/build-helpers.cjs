@@ -11,13 +11,24 @@ function mkdirp(dirPath) {
   }
 }
 
+// Run a git command, returning a fallback string if git is unavailable
+function tryGit(args, fallback = 'unknown') {
+  try {
+    return execSync(`git ${args}`, { stdio: ['pipe', 'pipe', 'pipe'] })
+      .toString()
+      .trim();
+  } catch {
+    return fallback;
+  }
+}
+
 // Generate version info
 function generateVersion() {
   mkdirp('dist');
 
-  const sha = execSync('git rev-parse HEAD').toString().trim();
-  const tag = execSync('git describe --tags --always').toString().trim();
-  const branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+  const sha = tryGit('rev-parse HEAD');
+  const tag = tryGit('describe --tags --always');
+  const branch = tryGit('rev-parse --abbrev-ref HEAD');
   const version = process.env.npm_package_version;
 
   const versionInfo = {

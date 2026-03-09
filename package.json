@@ -18,7 +18,7 @@
     "inspect:dev": "npx @modelcontextprotocol/inspector npx -y tsx src/index.ts",
     "lint": "eslint \"./src/**/*.{ts,tsx}\" \"./test/**/*.{ts,tsx}\" --no-error-on-unmatched-pattern",
     "lint:fix": "eslint \"./src/**/*.{ts,tsx}\" \"./test/**/*.{ts,tsx}\" --no-error-on-unmatched-pattern --fix",
-    "prepare": "husky && node .husky/setup-hooks.js",
+    "prepare": "node -e \"if(!process.env.CI&&process.env.HUSKY!=='0'){require('child_process').execSync('husky && node .husky/setup-hooks.js',{stdio:'inherit'})}\"",
     "spellcheck": "cspell \"*.md\" \"src/**/*.ts\" \"test/**/*.ts\"",
     "test": "vitest"
   },
