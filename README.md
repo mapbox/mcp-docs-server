@@ -4,7 +4,33 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that g
 
 ## Quick Start
 
-### Claude Code
+### Hosted (no install required)
+
+Connect directly to the hosted endpoint — nothing to install or maintain:
+
+**Claude Code / Claude Desktop / Cursor / VS Code**
+
+```json
+{
+  "mcpServers": {
+    "mapbox-docs": {
+      "url": "https://mcp-docs.mapbox.com/mcp"
+    }
+  }
+}
+```
+
+---
+
+### npx (runs locally, no install)
+
+**Claude Code** — run `claude mcp add`:
+
+```bash
+claude mcp add mapbox-docs -- npx -y @mapbox/mcp-docs-server
+```
+
+**Claude Desktop** — add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
 ```json
 {
@@ -17,24 +43,60 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that g
 }
 ```
 
-### Claude Desktop
+**Cursor / VS Code** — add the same `mcpServers` block to your editor's MCP settings file.
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+---
+
+### Docker
+
+**Build the image:**
+
+```bash
+docker build -t mapbox/mcp-docs-server .
+```
+
+**Or pull from the registry:**
+
+```bash
+docker pull mapbox/mcp-docs-server
+```
+
+**Claude Desktop / Cursor / VS Code** — configure your MCP client to run the container:
 
 ```json
 {
   "mcpServers": {
     "mapbox-docs": {
-      "command": "npx",
-      "args": ["-y", "@mapbox/mcp-docs-server"]
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "mapbox/mcp-docs-server"]
     }
   }
 }
 ```
 
-### Cursor / VS Code
+---
 
-Add the same `mcpServers` block to your editor's MCP settings file.
+### Local (from source)
+
+```bash
+git clone https://github.com/mapbox/mcp-docs-server.git
+cd mcp-docs-server
+npm install
+npm run build
+```
+
+**Claude Desktop / Cursor / VS Code:**
+
+```json
+{
+  "mcpServers": {
+    "mapbox-docs": {
+      "command": "node",
+      "args": ["/absolute/path/to/mcp-docs-server/dist/esm/index.js"]
+    }
+  }
+}
+```
 
 ## Tools
 

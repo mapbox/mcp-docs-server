@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+test
+*.test.ts
+.husky
+.git
+.github
+*.md
