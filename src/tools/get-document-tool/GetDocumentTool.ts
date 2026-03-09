@@ -2,7 +2,11 @@
 // Licensed under the MIT License.
 
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { docCache } from '../../utils/docCache.js';
+import {
+  docCache,
+  MAX_ENTRY_BYTES,
+  readBodyWithLimit
+} from '../../utils/docCache.js';
 import type { HttpRequest } from '../../utils/types.js';
 import { BaseTool } from '../BaseTool.js';
 import {
@@ -73,7 +77,7 @@ export class GetDocumentTool extends BaseTool<typeof GetDocumentSchema> {
         };
       }
 
-      const content = await response.text();
+      const content = await readBodyWithLimit(response, MAX_ENTRY_BYTES);
       docCache.set(input.url, content);
 
       return { content: [{ type: 'text', text: content }], isError: false };
