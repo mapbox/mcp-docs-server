@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mapbox/mcp-docs-server",
+  "description": "Mapbox documentation server — gives AI assistants instant access to Mapbox docs, SDK references, style specs, and API guides. No Mapbox access token required.",
+  "repository": {
+    "url": "https://github.com/mapbox/mcp-docs-server",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "runtimeHint": "npx",
+      "version": "0.1.0",
+      "identifier": "@mapbox/mcp-docs-server",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp-docs.mapbox.com/mcp"
+    }
+  ]
+}

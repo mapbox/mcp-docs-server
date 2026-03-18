@@ -1,0 +1,25 @@
+{
+  "dxt_version": "0.1",
+  "display_name": "Mapbox MCP Docs Server",
+  "name": "@mapbox/mcp-docs-server",
+  "version": "0.1.0",
+  "description": "Mapbox documentation server.",
+  "author": {
+    "name": "Mapbox, Inc."
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "dist/esm/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/esm/index.js"
+      ]
+    }
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mapbox/mcp-docs-server.git"
+  }
+}
