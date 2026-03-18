@@ -2,6 +2,8 @@
 
 ## 0.1.0 - 2026-03-18
 
+## 0.1.0 - 2026-03-18
+
 ### Add hosted deployment at mcp-docs.mapbox.com
 
 - `@mapbox/mcp-docs-server` is now available as a hosted MCP endpoint at `https://mcp-docs.mapbox.com/mcp` — no install or token required
