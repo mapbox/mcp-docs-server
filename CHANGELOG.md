@@ -1,6 +1,6 @@
 ## Unreleased
 
-## 0.1.0 - 2026-03-18
+## 0.1.0
 
 ### Add hosted deployment at mcp-docs.mapbox.com
 
