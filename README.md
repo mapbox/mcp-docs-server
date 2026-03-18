@@ -100,9 +100,7 @@ npm run build
 
 ## Tools
 
-### Documentation Tools
-
-**`get_latest_mapbox_docs_tool`** — Fetches the full Mapbox documentation index from `docs.mapbox.com/llms.txt`. Returns up-to-date, comprehensive coverage of all Mapbox services, APIs, SDKs, and guides in a single LLM-optimized format.
+**`get_document_tool`** — Fetches the full content of a specific Mapbox documentation page by URL. Use this to follow a link from a resource and retrieve the complete page content.
 
 Example prompts:
 
@@ -110,36 +108,23 @@ Example prompts:
 - "How do I add a custom layer to a Mapbox style?"
 - "What's the latest Mapbox GL JS version?"
 
-**`search_mapbox_docs_tool`** _(coming soon)_ — AI-powered search of Mapbox documentation. Returns ranked, relevant sections for a specific query instead of the full corpus. Supports filtering by category (apis, sdks, guides, examples).
-
-**`explore_mapbox_api_tool`** _(coming soon)_ — Structured, queryable information about Mapbox REST API endpoints. Lists available APIs, operations, required parameters, authentication scopes, and rate limits without making any API calls.
-
-**`validate_api_request_tool`** _(coming soon)_ — Validates a Mapbox API request before sending it. Checks required parameters, types, enum values, and token scopes.
-
-**`test_api_request_tool`** _(coming soon)_ — Makes real HTTP calls to Mapbox APIs and returns actual responses, with optional code generation in curl, JavaScript, and Python. Requires a Mapbox access token as input.
-
-**`get_contextual_docs_tool`** _(coming soon)_ — Retrieves documentation relevant to a specific code context, error message, or technology.
-
-### Reference Tools
-
-**`get_reference_tool`** — Serves static Mapbox reference documentation directly as tool output (useful for clients that don't support MCP resources). Covers style layers, Streets v8 fields, token scopes, and layer type mappings.
+**`batch_get_documents_tool`** — Fetches multiple Mapbox documentation pages in a single call (max 20). More efficient than calling `get_document_tool` multiple times. Failed pages include an error message rather than failing the whole batch.
 
 ## Resources
 
 MCP resources expose reference data that AI assistants can read on demand:
 
-| Resource URI                                      | Contents                                                            |
-| ------------------------------------------------- | ------------------------------------------------------------------- |
-| `resource://mapbox-documentation`                 | Full Mapbox docs from `docs.mapbox.com/llms.txt`                    |
-| `resource://mapbox-api-reference` _(coming soon)_ | REST API reference docs only                                        |
-| `resource://mapbox-sdk-docs` _(coming soon)_      | SDK and client library docs only                                    |
-| `resource://mapbox-guides` _(coming soon)_        | Tutorials, how-tos, and guides only                                 |
-| `resource://mapbox-examples` _(coming soon)_      | Code examples and playgrounds only                                  |
-| `resource://mapbox-reference` _(coming soon)_     | Tilesets, data products, and reference materials                    |
-| `resource://mapbox-style-layers`                  | Style layer reference (paint/layout properties for all layer types) |
-| `resource://mapbox-streets-v8-fields`             | Mapbox Streets v8 tileset field reference                           |
-| `resource://mapbox-token-scopes`                  | All available Mapbox token scopes with descriptions                 |
-| `resource://mapbox-layer-type-mapping`            | Mapping of Mapbox layer types to their properties                   |
+| Resource URI                           | Contents                                                            |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| `resource://mapbox-api-reference`      | REST API reference docs (endpoints, parameters, rate limits)        |
+| `resource://mapbox-sdk-docs`           | SDK and client library docs (iOS, Android, Flutter, web)            |
+| `resource://mapbox-guides`             | Tutorials, how-tos, and guides                                      |
+| `resource://mapbox-examples`           | Code examples, API playgrounds, and interactive demos               |
+| `resource://mapbox-reference`          | Tilesets, data products, accounts, and pricing reference            |
+| `resource://mapbox-style-layers`       | Style layer reference (paint/layout properties for all layer types) |
+| `resource://mapbox-streets-v8-fields`  | Mapbox Streets v8 tileset field reference                           |
+| `resource://mapbox-token-scopes`       | All available Mapbox token scopes with descriptions                 |
+| `resource://mapbox-layer-type-mapping` | Mapping of Mapbox layer types to their properties                   |
 
 ## Development
 
