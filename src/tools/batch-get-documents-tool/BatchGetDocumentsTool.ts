@@ -2,12 +2,8 @@
 // Licensed under the MIT License.
 
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import {
-  docCache,
-  normalizeCacheKey,
-  MAX_ENTRY_BYTES,
-  readBodyWithLimit
-} from '../../utils/docCache.js';
+import { docCache, normalizeCacheKey } from '../../utils/docCache.js';
+import { fetchDocContent } from '../../utils/docFetcher.js';
 import type { HttpRequest } from '../../utils/types.js';
 import { BaseTool } from '../BaseTool.js';
 import {
@@ -79,15 +75,7 @@ export class BatchGetDocumentsTool extends BaseTool<
       if (existing) return existing;
 
       const promise = (async () => {
-        const response = await this.httpRequest(url, {
-          headers: { Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8' }
-        });
-
-        if (!response.ok) {
-          throw new Error(`${response.status} ${response.statusText}`);
-        }
-
-        const content = await readBodyWithLimit(response, MAX_ENTRY_BYTES);
+        const content = await fetchDocContent(url, this.httpRequest);
         docCache.set(url, content);
         return content;
       })();
