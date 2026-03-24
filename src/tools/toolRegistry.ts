@@ -5,6 +5,7 @@ import { ZodTypeAny } from 'zod';
 import { BaseTool } from './BaseTool.js';
 import { BatchGetDocumentsTool } from './batch-get-documents-tool/BatchGetDocumentsTool.js';
 import { GetDocumentTool } from './get-document-tool/GetDocumentTool.js';
+import { SearchDocsTool } from './search-docs-tool/SearchDocsTool.js';
 import { httpRequest } from '../utils/httpPipeline.js';
 
 export type ToolInstance = BaseTool<ZodTypeAny>;
@@ -14,7 +15,8 @@ export type ToolInstance = BaseTool<ZodTypeAny>;
  */
 export const CORE_TOOLS: ToolInstance[] = [
   new GetDocumentTool({ httpRequest }),
-  new BatchGetDocumentsTool({ httpRequest })
+  new BatchGetDocumentsTool({ httpRequest }),
+  new SearchDocsTool({ httpRequest })
 ];
 
 export const ALL_TOOLS: ToolInstance[] = [...CORE_TOOLS];
