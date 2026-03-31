@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Add `search_mapbox_docs_tool`
+
+- New `search_mapbox_docs_tool` searches all Mapbox documentation via the Algolia index powering docs.mapbox.com
+- Returns ranked results with titles, URLs, and content excerpts — use `get_document_tool` to fetch the full page content
+- Supports 1–20 results per query (default 5)
+
 ## 0.1.2 - 2026-03-18
 
 ## 0.1.1 - 2026-03-18
