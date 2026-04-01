@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.2.0 - 2026-04-01
+
 ### Add `search_mapbox_docs_tool`
 
 - New `search_mapbox_docs_tool` searches all Mapbox documentation via the Algolia index powering docs.mapbox.com
