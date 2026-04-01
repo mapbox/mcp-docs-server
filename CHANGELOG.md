@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.2.1 - 2026-04-01
+
 ## 0.2.0 - 2026-04-01
 
 ### Add `search_mapbox_docs_tool`
