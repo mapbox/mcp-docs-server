@@ -110,6 +110,14 @@ Example prompts:
 
 **`batch_get_documents_tool`** — Fetches multiple Mapbox documentation pages in a single call (max 20). More efficient than calling `get_document_tool` multiple times. Failed pages include an error message rather than failing the whole batch.
 
+**`search_docs_tool`** — Searches Mapbox documentation using Algolia full-text search and returns matching page URLs and excerpts. Use this to find relevant documentation before fetching full pages with `get_document_tool` or `batch_get_documents_tool`.
+
+Example prompts:
+
+- "Find docs about camera animation"
+- "Search for geocoding API examples"
+- "What documentation exists for custom layers?"
+
 ## Resources
 
 MCP resources expose reference data that AI assistants can read on demand:
