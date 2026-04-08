@@ -2,6 +2,10 @@
 
 ## 0.2.1 - 2026-04-01
 
+### Security
+
+- **CVE-2026-4926**: Upgraded `@modelcontextprotocol/sdk` to `^1.29.0`, resolving `path-to-regexp` to `8.4.1` and fixing the ReDoS vulnerability [GHSA-j3q9-mxjg-w52f](https://github.com/advisories/GHSA-j3q9-mxjg-w52f)
+
 ## 0.2.0 - 2026-04-01
 
 ### Add `search_mapbox_docs_tool`
