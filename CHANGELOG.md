@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Dependencies
+
+- **Upgrade `tshy` to `^4.1.1`, `vitest` to `^4.1.4`, `typescript` to `^6.0.2`** — removed deprecated `baseUrl` from `tsconfig.base.json` (TS6), added `"types": ["node"]` required by `@types/node` v24+
+
 ## 0.2.1 - 2026-04-01
 
 ### Security
