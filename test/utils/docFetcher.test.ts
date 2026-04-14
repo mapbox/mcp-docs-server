@@ -158,7 +158,7 @@ describe('fetchDocContent', () => {
     expect(httpRequest).toHaveBeenNthCalledWith(
       2,
       'https://docs.mapbox.com/accounts/guides',
-      expect.objectContaining({ headers: expect.anything() })
+      {}
     );
     expect(content).toBe(html);
   });
@@ -171,7 +171,7 @@ describe('fetchDocContent', () => {
     expect(httpRequest).toHaveBeenCalledTimes(1);
     expect(httpRequest).toHaveBeenCalledWith(
       'https://api.mapbox.com/geocoding/v5',
-      expect.objectContaining({ headers: expect.anything() })
+      {}
     );
   });
 
