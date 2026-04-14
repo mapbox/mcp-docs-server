@@ -7,6 +7,7 @@ import { parseToolConfigFromArgs, filterTools } from './config/toolConfig.js';
 import { getCoreTools } from './tools/toolRegistry.js';
 import { getAllResources } from './resources/resourceRegistry.js';
 import { getVersionInfo } from './utils/versionUtils.js';
+import { initializeTracing, shutdownTracing } from './utils/tracing.js';
 
 // Parse configuration from command-line arguments
 const config = parseToolConfigFromArgs();
@@ -43,6 +44,8 @@ resources.forEach((resource) => {
 });
 
 async function main() {
+  await initializeTracing();
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
@@ -61,6 +64,7 @@ async function shutdown() {
   } catch {
     // Ignore logging errors during shutdown
   }
+  await shutdownTracing();
   process.exit(0);
 }
 

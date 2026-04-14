@@ -1,5 +1,14 @@
 ## Unreleased
 
+### Add OpenTelemetry tracing
+
+- Added `src/utils/tracing.ts` with `initializeTracing()`, `shutdownTracing()`, `getTracer()`, and `withToolSpan()` — mirrors the tracing implementation in `mcp-server` and `mcp-devkit-server`
+- `BaseTool.run()` now wraps every tool execution in a `tool.<name>` span via `withToolSpan()`; marks `tool.error=true` on tool-level errors
+- `index.ts` calls `initializeTracing()` on startup and `shutdownTracing()` on graceful exit
+- OTEL is a no-op unless `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_CONSOLE_ENABLED=true` is set; fully suppresses diagnostic output on stdio to preserve MCP protocol
+- Exports `initializeTracing`, `shutdownTracing`, `isTracingInitialized`, `getTracer`, `withToolSpan` from `@mapbox/mcp-docs-server/utils`
+- Dependencies: `@opentelemetry/api@^1.9.1`, `@opentelemetry/resources@^2.6.1`, `@opentelemetry/sdk-trace-base@^2.6.1`, `@opentelemetry/sdk-node@^0.214.0`, `@opentelemetry/instrumentation@^0.214.0`, `@opentelemetry/exporter-trace-otlp-http@^0.214.0`, `@opentelemetry/auto-instrumentations-node@^0.72.0`, `@opentelemetry/semantic-conventions@^1.40.0`
+
 ### Resources — use sublevel `llms.txt` per product
 
 docs.mapbox.com restructured its documentation so that `llms.txt` files now exist at every product level (e.g. `docs.mapbox.com/api/llms.txt`, `docs.mapbox.com/help/llms.txt`, `docs.mapbox.com/mapbox-gl-js/llms.txt`) alongside `llms-full.txt` files containing full page content. The root `docs.mapbox.com/llms.txt` is now a pure index of links to these sublevel files rather than a monolithic content file. The previous resources all filtered the root file by category keyword — now that the root contains only link lists, they were effectively returning empty or useless content.
