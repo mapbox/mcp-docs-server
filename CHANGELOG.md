@@ -1,5 +1,13 @@
 ## Unreleased
 
+### Add `get_mapbox_docs_index_tool`
+
+New tool that fetches the `llms.txt` documentation index for any Mapbox product directly — no manual resource attachment required. The model can autonomously discover and fetch the right index without user intervention.
+
+- Supports 13 products: `api-reference`, `mapbox-gl-js`, `help-guides`, `style-spec`, `studio-manual`, `search-js`, `ios-maps`, `android-maps`, `ios-navigation`, `android-navigation`, `tiling-service`, `tilesets`, and `catalog` (root index)
+- Results are cached via `docCache` — first fetch hits the network, subsequent calls are instant
+- Complements `search_mapbox_docs_tool` (keyword search) and `get_document_tool` (full page fetch): use this when you know which product you need
+
 ### Resources — use sublevel `llms.txt` per product
 
 docs.mapbox.com restructured its documentation so that `llms.txt` files now exist at every product level (e.g. `docs.mapbox.com/api/llms.txt`, `docs.mapbox.com/help/llms.txt`, `docs.mapbox.com/mapbox-gl-js/llms.txt`) alongside `llms-full.txt` files containing full page content. The root `docs.mapbox.com/llms.txt` is now a pure index of links to these sublevel files rather than a monolithic content file. The previous resources all filtered the root file by category keyword — now that the root contains only link lists, they were effectively returning empty or useless content.
