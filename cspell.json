@@ -21,6 +21,8 @@
     "Tilesets",
     "tilestats",
     "Tilequery",
+    "isochrone",
+    "Isochrone",
     "aerialway",
     "aeroway",
     "housenum",
