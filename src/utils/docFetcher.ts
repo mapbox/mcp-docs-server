@@ -73,9 +73,7 @@ export async function fetchCachedText(
   const cached = docCache.get(url);
   if (cached !== null) return cached;
 
-  const response = await httpRequest(url, {
-    headers: { Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8' }
-  });
+  const response = await httpRequest(url, {});
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
