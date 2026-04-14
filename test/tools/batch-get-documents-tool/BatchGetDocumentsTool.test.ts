@@ -93,7 +93,7 @@ describe('BatchGetDocumentsTool', () => {
     it('returns an error for a URL whose Content-Length exceeds the limit', async () => {
       const oversizeHeaders = new Headers({
         'content-type': 'text/plain',
-        'content-length': String(3 * 1024 * 1024) // 3 MB > 2 MB limit
+        'content-length': String(6 * 1024 * 1024) // 6 MB > 5 MB limit
       });
       const httpRequest = vi
         .fn()

@@ -255,6 +255,43 @@ describe('DocCache', () => {
       cache.set('https://docs.mapbox.com/page', content);
       expect(cache.get('https://docs.mapbox.com/page')).toBe(content);
     });
+
+    it('warns and rejects when entry exceeds hard cap', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        // Use the real docCache singleton via a tiny cap override isn't possible,
+        // so we verify the warning path via the real module with a 5MB content.
+        // Instead, test the warning logic on the actual singleton with a spy.
+        const { docCache: real } = await import('../../src/utils/docCache.js');
+        real.clear();
+        // Content just over 5MB hard cap
+        const oversized = 'x'.repeat(5 * 1024 * 1024 + 1);
+        real.set('https://docs.mapbox.com/page', oversized);
+        expect(real.get('https://docs.mapbox.com/page')).toBeNull();
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('too large to cache')
+        );
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
+
+    it('warns but caches entries between 1MB and 5MB', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        const { docCache: real } = await import('../../src/utils/docCache.js');
+        real.clear();
+        // Content just over the 1MB warning threshold but under the 5MB cap
+        const large = 'x'.repeat(1 * 1024 * 1024 + 1);
+        real.set('https://docs.mapbox.com/page', large);
+        expect(real.get('https://docs.mapbox.com/page')).toBe(large);
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Caching large entry')
+        );
+      } finally {
+        warnSpy.mockRestore();
+      }
+    });
   });
 
   describe('total bytes limit', () => {
