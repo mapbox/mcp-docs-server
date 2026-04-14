@@ -25,7 +25,7 @@ export class MapboxApiReferenceResource extends BaseResource {
     'Mapbox REST API reference index organized by service (Maps, Navigation, Search, Accounts). ' +
     'Lists all API endpoints with links to detailed reference pages covering parameters, ' +
     'rate limits, authentication, and response formats (Geocoding, Directions, Static Images, ' +
-    'Tilequery, Matrix, Isochrone, Optimization, Styles, Uploads, Datasets, and more).';
+    'Tilequery, Matrix, isochrone, Optimization, Styles, Uploads, Datasets, and more).';
   readonly mimeType = 'text/markdown';
 
   private httpRequest: HttpRequest;
