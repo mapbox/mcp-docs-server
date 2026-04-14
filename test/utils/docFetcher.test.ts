@@ -1,8 +1,13 @@
 // Copyright (c) Mapbox, Inc.
 // Licensed under the MIT License.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { toMarkdownUrl, fetchDocContent } from '../../src/utils/docFetcher.js';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import {
+  toMarkdownUrl,
+  fetchDocContent,
+  fetchCachedText
+} from '../../src/utils/docFetcher.js';
+import { docCache } from '../../src/utils/docCache.js';
 
 function makeResponse(body: string, status = 200): Response {
   return new Response(body, {
@@ -13,6 +18,10 @@ function makeResponse(body: string, status = 200): Response {
     }
   });
 }
+
+beforeEach(() => {
+  docCache.clear();
+});
 
 afterEach(() => {
   delete process.env.MAPBOX_DOCS_HOST_OVERRIDE;
@@ -48,6 +57,65 @@ describe('toMarkdownUrl', () => {
     expect(toMarkdownUrl('https://docs.mapbox.com/accounts/guides')).toBe(
       'https://docs.tilestream.net/accounts/guides.md'
     );
+  });
+
+  it('returns null for .txt URLs (already a text file, no rewrite needed)', () => {
+    expect(
+      toMarkdownUrl('https://docs.mapbox.com/mapbox-gl-js/llms.txt')
+    ).toBeNull();
+    expect(
+      toMarkdownUrl('https://docs.mapbox.com/mapbox-gl-js/llms-full.txt')
+    ).toBeNull();
+    expect(toMarkdownUrl('https://docs.mapbox.com/api/llms.txt')).toBeNull();
+  });
+
+  it('returns null for .md URLs (already markdown, no double-extension)', () => {
+    expect(
+      toMarkdownUrl('https://docs.mapbox.com/api/navigation/directions.md')
+    ).toBeNull();
+  });
+});
+
+describe('fetchCachedText', () => {
+  it('fetches and caches the response', async () => {
+    const content = '# Mapbox API\n\nSome content.';
+    const httpRequest = vi.fn().mockResolvedValue(
+      new Response(content, {
+        status: 200,
+        headers: {
+          'content-type': 'text/plain',
+          'content-length': String(Buffer.byteLength(content, 'utf8'))
+        }
+      })
+    );
+
+    const result = await fetchCachedText(
+      'https://docs.mapbox.com/api/llms.txt',
+      httpRequest
+    );
+
+    expect(result).toBe(content);
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+
+    // Second call should use cache, not make another request
+    const result2 = await fetchCachedText(
+      'https://docs.mapbox.com/api/llms.txt',
+      httpRequest
+    );
+    expect(result2).toBe(content);
+    expect(httpRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws if the response is not ok', async () => {
+    const httpRequest = vi
+      .fn()
+      .mockResolvedValue(
+        new Response('Not Found', { status: 404, statusText: 'Not Found' })
+      );
+
+    await expect(
+      fetchCachedText('https://docs.mapbox.com/api/llms.txt', httpRequest)
+    ).rejects.toThrow('Not Found');
   });
 });
 
