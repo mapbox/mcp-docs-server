@@ -1,5 +1,21 @@
 ## Unreleased
 
+### Resources — use sublevel `llms.txt` per product
+
+docs.mapbox.com restructured its documentation so that `llms.txt` files now exist at every product level (e.g. `docs.mapbox.com/api/llms.txt`, `docs.mapbox.com/help/llms.txt`, `docs.mapbox.com/mapbox-gl-js/llms.txt`) alongside `llms-full.txt` files containing full page content. The root `docs.mapbox.com/llms.txt` is now a pure index of links to these sublevel files rather than a monolithic content file. The previous resources all filtered the root file by category keyword — now that the root contains only link lists, they were effectively returning empty or useless content.
+
+Updated resources to use the appropriate sublevel `llms.txt` files:
+
+- **`resource://mapbox-api-reference`** now fetches `docs.mapbox.com/api/llms.txt` — a clean, structured index of every Mapbox REST API grouped by service (Maps, Navigation, Search, Accounts) with links to full API reference pages
+- **`resource://mapbox-guides`** now fetches `docs.mapbox.com/help/llms.txt` (39KB) — the full Mapbox Help Center index with troubleshooting guides, how-to tutorials, and walkthroughs
+- **`resource://mapbox-sdk-docs`** now fetches `docs.mapbox.com/mapbox-gl-js/llms.txt` (34KB) — the GL JS documentation index listing all guides, API reference pages, and examples for the primary web mapping SDK
+- **`resource://mapbox-reference`** now fetches the root `llms.txt` without filtering and returns the complete product catalog — useful for discovering what documentation exists and finding `llms.txt` URLs for any product
+- **`resource://mapbox-examples`** continues to extract playground/demo/example sections from the root index (API Playgrounds, Demos & Projects)
+
+**`docFetcher.fetchCachedText`** — new shared helper that fetches a URL and stores it in `docCache`, used by all five resources to avoid duplicating the fetch+cache pattern.
+
+**`docFetcher.toMarkdownUrl`** — no longer rewrites URLs already ending in `.txt`, `.md`, or `.json`. Previously `get_document_tool` would try to fetch `llms.txt.md` before falling back; now it fetches `llms.txt` directly on the first attempt.
+
 ## 0.2.1 - 2026-04-01
 
 ### Security
