@@ -27,7 +27,7 @@ export class MapboxExamplesResource extends BaseResource {
   readonly description =
     'Mapbox interactive API playgrounds, demo applications, and code examples. ' +
     'Includes playground URLs for Directions, Search Box, Static Images, ' +
-    'Isochrone, Matrix APIs, and demo apps for real estate, store locator, etc.';
+    'isochrone, Matrix APIs, and demo apps for real estate, store locator, etc.';
   readonly mimeType = 'text/markdown';
 
   private httpRequest: HttpRequest;
