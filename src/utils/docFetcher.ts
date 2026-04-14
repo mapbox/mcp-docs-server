@@ -1,7 +1,7 @@
 // Copyright (c) Mapbox, Inc.
 // Licensed under the MIT License.
 
-import { MAX_ENTRY_BYTES, readBodyWithLimit } from './docCache.js';
+import { docCache, MAX_ENTRY_BYTES, readBodyWithLimit } from './docCache.js';
 import type { HttpRequest } from './types.js';
 
 const DOCS_HOSTNAME = 'docs.mapbox.com';
@@ -54,6 +54,34 @@ function applyHostOverride(url: string): string {
   } catch {
     return url;
   }
+}
+
+/**
+ * Fetch a URL and cache the result. Intended for fetching llms.txt index
+ * files which are small, change infrequently, and are shared across multiple
+ * resources and tool calls.
+ */
+export async function fetchCachedText(
+  url: string,
+  httpRequest: HttpRequest
+): Promise<string> {
+  const cached = docCache.get(url);
+  if (cached !== null) return cached;
+
+  const response = await httpRequest(url, {
+    headers: { Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8' }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+  }
+
+  const content = await response.text();
+  if (Buffer.byteLength(content, 'utf8') > MAX_ENTRY_BYTES) {
+    throw new Error(`Response too large for ${url}`);
+  }
+  docCache.set(url, content);
+  return content;
 }
 
 /**

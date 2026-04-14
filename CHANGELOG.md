@@ -1,5 +1,32 @@
 ## Unreleased
 
+### Replace Algolia search with self-contained llms.txt search
+
+`search_mapbox_docs_tool` no longer depends on the Algolia third-party service. The hosted server shares a single Algolia free-tier quota across all users, making it prone to throttling as usage grows. The new implementation searches directly against the `llms.txt` index files that now exist at every product level on docs.mapbox.com.
+
+**How it works:**
+
+On first search, the tool fetches 12 product `llms.txt` files in parallel (~220KB total). Each file contains a structured list of documentation pages with titles, URLs, and one-line descriptions. These files are cached for the standard 1-hour TTL, so subsequent searches are pure in-memory keyword matching — no network calls.
+
+**Products indexed:**
+
+- API Reference (`api/llms.txt`)
+- Mapbox GL JS (`mapbox-gl-js/llms.txt`)
+- Help Center (`help/llms.txt`)
+- Style Specification (`style-spec/llms.txt`)
+- Studio Manual (`studio-manual/llms.txt`)
+- Mapbox Search JS (`mapbox-search-js/llms.txt`)
+- Maps SDK for iOS and Android
+- Navigation SDK for iOS and Android
+- Mapbox Tiling Service
+- Tilesets
+
+**Scoring:** Title matches (3×) outrank description matches (1×) and URL path matches (1×). Results are deduplicated by URL across sources and capped at the requested `limit`.
+
+**Reliability:** Failed sources are silently skipped — if any single product `llms.txt` is unreachable, the remaining sources still return results.
+
+**`fetchCachedText(url, httpRequest)`** — new helper in `docFetcher.ts` that fetches a URL and stores the response in `docCache`. Used by `docsSearchIndex.ts` to share the cache with the resource layer (which also caches `llms.txt` files). Fixed a subtle bug where empty-string responses (`''`) were not treated as cache hits due to falsy check — now uses `!== null`.
+
 ### Raise `docCache` per-entry limit to 5 MB with size warnings
 
 - **Hard cap raised from 2 MB → 5 MB** — allows `llms-full.txt` files (Style Spec 466 KB, iOS Nav 696 KB, GL JS 1.6 MB) to be cached after being fetched via `get_document_tool`

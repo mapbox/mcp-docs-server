@@ -1,188 +1,190 @@
 // Copyright (c) Mapbox, Inc.
 // Licensed under the MIT License.
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SearchDocsTool } from '../../../src/tools/search-docs-tool/SearchDocsTool.js';
+import { docCache } from '../../../src/utils/docCache.js';
 
-function makeResponse(body: object, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' }
+const GL_JS_LLMS_TXT = `# Mapbox GL JS
+
+> Documentation for Mapbox GL JS
+
+## Guides
+
+- [Add your data to the map](https://docs.mapbox.com/mapbox-gl-js/guides/add-your-data.md): Mapbox GL JS offers several ways to add your data to the map.
+- [Markers](https://docs.mapbox.com/mapbox-gl-js/guides/add-your-data/markers.md): Add interactive markers to your map with minimal code using the Marker class.
+- [Getting Started](https://docs.mapbox.com/mapbox-gl-js/guides/get-started.md): Get started with Mapbox GL JS.
+
+## Examples
+
+- [Add a marker to the map](https://docs.mapbox.com/mapbox-gl-js/example/add-a-marker.md): Use a Marker to add a visual indicator to the map.
+`;
+
+const API_LLMS_TXT = `# API Docs
+
+> Documentation for Mapbox Web APIs
+
+## Navigation
+
+- [Directions API](https://docs.mapbox.com/api/navigation/directions.md): The Mapbox Directions API calculates optimal routes and produces turn-by-turn instructions.
+- [Matrix API](https://docs.mapbox.com/api/navigation/matrix.md): The Mapbox Matrix API returns travel times between many points.
+
+## Search
+
+- [Geocoding API](https://docs.mapbox.com/api/search/geocoding.md): Convert addresses and place names to geographic coordinates.
+`;
+
+function makeLlmsTxtResponse(content: string): Response {
+  return new Response(content, {
+    status: 200,
+    headers: {
+      'content-type': 'text/plain',
+      'content-length': String(Buffer.byteLength(content, 'utf8'))
+    }
   });
 }
 
-const sampleHits = [
-  {
-    url: 'https://docs.mapbox.com/mapbox-gl-js/example/add-a-marker/',
-    content: 'Use a Marker to add a visual indicator to the map.',
-    hierarchy: {
-      lvl0: 'Mapbox GL JS',
-      lvl1: 'Examples',
-      lvl2: 'Add a marker to the map',
-      lvl3: null,
-      lvl4: null,
-      lvl5: null,
-      lvl6: null
-    }
-  },
-  {
-    url: 'https://docs.mapbox.com/ios/maps/guides/add-your-data/markers/#basic-marker',
-    content: 'The simplest way to add a marker is to specify a coordinate.',
-    hierarchy: {
-      lvl0: 'Maps SDK for iOS',
-      lvl1: 'Markers',
-      lvl2: 'Adding a basic marker',
-      lvl3: null,
-      lvl4: null,
-      lvl5: null,
-      lvl6: null
-    }
-  }
-];
+beforeEach(() => {
+  docCache.clear();
+});
 
 describe('SearchDocsTool', () => {
-  it('returns formatted results for a successful search', async () => {
-    const httpRequest = vi
-      .fn()
-      .mockResolvedValue(makeResponse({ hits: sampleHits }));
-    const tool = new SearchDocsTool({ httpRequest });
+  it('returns ranked results matching the query', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      if (url.includes('/api/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(API_LLMS_TXT));
+      return Promise.resolve(makeLlmsTxtResponse(''));
+    });
 
+    const tool = new SearchDocsTool({ httpRequest });
     const result = await tool.run({ query: 'add a marker', limit: 5 });
 
     expect(result.isError).toBe(false);
     const text = result.content[0].text as string;
-    expect(text).toContain('Mapbox GL JS > Examples > Add a marker to the map');
+    expect(text).toContain('Markers');
     expect(text).toContain(
-      'https://docs.mapbox.com/mapbox-gl-js/example/add-a-marker/'
+      'https://docs.mapbox.com/mapbox-gl-js/guides/add-your-data/markers.md'
     );
-    expect(text).toContain('Use a Marker to add a visual indicator');
-    expect(text).toContain(
-      'Maps SDK for iOS > Markers > Adding a basic marker'
-    );
+    expect(text).toContain('Mapbox GL JS');
   });
 
-  it('POSTs to the Algolia endpoint with correct headers and body', async () => {
-    const httpRequest = vi.fn().mockResolvedValue(makeResponse({ hits: [] }));
+  it('returns "No results found" when nothing matches', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      return Promise.resolve(makeLlmsTxtResponse(''));
+    });
+
     const tool = new SearchDocsTool({ httpRequest });
-
-    await tool.run({ query: 'geocoding', limit: 3 });
-
-    expect(httpRequest).toHaveBeenCalledWith(
-      expect.stringContaining('algolia.net'),
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'X-Algolia-Application-Id': 'Z7QUXRWJ7L',
-          'X-Algolia-API-Key': expect.any(String)
-        }),
-        body: JSON.stringify({ query: 'geocoding', hitsPerPage: 3 })
-      })
-    );
-  });
-
-  it('returns "No results found" when hits array is empty', async () => {
-    const httpRequest = vi.fn().mockResolvedValue(makeResponse({ hits: [] }));
-    const tool = new SearchDocsTool({ httpRequest });
-
-    const result = await tool.run({ query: 'xyzzy nonexistent' });
+    const result = await tool.run({ query: 'xyzzy nonexistent quantum' });
 
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toBe('No results found.');
   });
 
-  it('returns error result when response is not ok', async () => {
-    const httpRequest = vi
-      .fn()
-      .mockResolvedValue(makeResponse({ message: 'Invalid API key' }, 403));
+  it('respects the limit parameter', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      if (url.includes('/api/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(API_LLMS_TXT));
+      return Promise.resolve(makeLlmsTxtResponse(''));
+    });
+
     const tool = new SearchDocsTool({ httpRequest });
-
-    const result = await tool.run({ query: 'markers' });
-
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('403');
-  });
-
-  it('returns error result on network failure', async () => {
-    const httpRequest = vi.fn().mockRejectedValue(new Error('Network error'));
-    const tool = new SearchDocsTool({ httpRequest });
-
-    const result = await tool.run({ query: 'markers' });
-
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('Network error');
-  });
-
-  it('strips HTML highlight tags from content and hierarchy', async () => {
-    const httpRequest = vi.fn().mockResolvedValue(
-      makeResponse({
-        hits: [
-          {
-            url: 'https://docs.mapbox.com/api/search/geocoding/',
-            content:
-              'Use the <span class="algolia-docsearch-suggestion--highlight">Geocoding</span> API to convert addresses.',
-            hierarchy: {
-              lvl0: '<span class="algolia-docsearch-suggestion--highlight">Geocoding</span> API',
-              lvl1: 'Overview',
-              lvl2: null,
-              lvl3: null,
-              lvl4: null,
-              lvl5: null,
-              lvl6: null
-            }
-          }
-        ]
-      })
-    );
-    const tool = new SearchDocsTool({ httpRequest });
-
-    const result = await tool.run({ query: 'geocoding' });
-    const text = result.content[0].text as string;
-
-    expect(text).not.toContain('<span');
-    expect(text).toContain('Geocoding API');
-    expect(text).toContain('Use the Geocoding API to convert addresses.');
-  });
-
-  it('handles hits with null content gracefully', async () => {
-    const httpRequest = vi.fn().mockResolvedValue(
-      makeResponse({
-        hits: [
-          {
-            url: 'https://docs.mapbox.com/api/search/',
-            content: null,
-            hierarchy: {
-              lvl0: 'Search',
-              lvl1: null,
-              lvl2: null,
-              lvl3: null,
-              lvl4: null,
-              lvl5: null,
-              lvl6: null
-            }
-          }
-        ]
-      })
-    );
-    const tool = new SearchDocsTool({ httpRequest });
-
-    const result = await tool.run({ query: 'search' });
+    const result = await tool.run({ query: 'map', limit: 2 });
 
     expect(result.isError).toBe(false);
-    expect(result.content[0].text).toContain('Search');
-    expect(result.content[0].text).not.toContain('undefined');
+    const text = result.content[0].text as string;
+    // Numbered list — should not contain "3."
+    expect(text).toContain('1.');
+    expect(text).toContain('2.');
+    expect(text).not.toContain('3.');
   });
 
-  it('uses default limit of 5 when not specified', async () => {
-    const httpRequest = vi.fn().mockResolvedValue(makeResponse({ hits: [] }));
+  it('searches across multiple product sources', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      if (url.includes('/api/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(API_LLMS_TXT));
+      return Promise.resolve(makeLlmsTxtResponse(''));
+    });
+
     const tool = new SearchDocsTool({ httpRequest });
+    const result = await tool.run({ query: 'directions', limit: 5 });
 
-    await tool.run({ query: 'navigation' });
+    expect(result.isError).toBe(false);
+    const text = result.content[0].text as string;
+    expect(text).toContain('Directions API');
+    expect(text).toContain('API Reference');
+  });
 
-    expect(httpRequest).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: JSON.stringify({ query: 'navigation', hitsPerPage: 5 })
-      })
-    );
+  it('deduplicates results when same URL appears in multiple sources', async () => {
+    const duplicate = `# Product A\n\n## Guides\n\n- [Geocoding Guide](https://docs.mapbox.com/api/search/geocoding.md): How to geocode.`;
+    const httpRequest = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(makeLlmsTxtResponse(duplicate))
+      );
+
+    const tool = new SearchDocsTool({ httpRequest });
+    const result = await tool.run({ query: 'geocoding', limit: 10 });
+
+    const text = result.content[0].text as string;
+    // Count occurrences of the URL — should appear only once
+    const count = (
+      text.match(/docs\.mapbox\.com\/api\/search\/geocoding/g) ?? []
+    ).length;
+    expect(count).toBe(1);
+  });
+
+  it('includes product name in each result', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      return Promise.resolve(makeLlmsTxtResponse(''));
+    });
+
+    const tool = new SearchDocsTool({ httpRequest });
+    const result = await tool.run({ query: 'getting started' });
+
+    expect(result.content[0].text).toContain('Mapbox GL JS');
+  });
+
+  it('gracefully skips sources that fail to fetch', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      // All other sources fail
+      return Promise.reject(new Error('Network error'));
+    });
+
+    const tool = new SearchDocsTool({ httpRequest });
+    const result = await tool.run({ query: 'marker' });
+
+    // Should still return results from the working source
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain('Markers');
+  });
+
+  it('uses cached content on repeated searches without re-fetching', async () => {
+    const httpRequest = vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/mapbox-gl-js/llms.txt'))
+        return Promise.resolve(makeLlmsTxtResponse(GL_JS_LLMS_TXT));
+      return Promise.resolve(makeLlmsTxtResponse(''));
+    });
+
+    const tool = new SearchDocsTool({ httpRequest });
+    await tool.run({ query: 'marker' });
+
+    const callsAfterFirst = httpRequest.mock.calls.length;
+
+    // Second search — all sources should be cached
+    await tool.run({ query: 'marker' });
+
+    expect(httpRequest.mock.calls.length).toBe(callsAfterFirst);
   });
 });
