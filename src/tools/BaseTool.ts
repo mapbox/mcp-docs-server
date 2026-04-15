@@ -11,6 +11,7 @@ import {
   ToolAnnotations
 } from '@modelcontextprotocol/sdk/types.js';
 import { z, ZodTypeAny } from 'zod';
+import { withToolSpan } from '../utils/tracing.js';
 
 export abstract class BaseTool<
   InputSchema extends ZodTypeAny,
@@ -40,15 +41,22 @@ export abstract class BaseTool<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _extra?: RequestHandlerExtra<any, any>
   ): Promise<CallToolResult> {
-    try {
-      const input = this.inputSchema.parse(rawInput);
-      return this.execute(input);
-    } catch (error) {
-      return {
-        isError: true,
-        content: [{ type: 'text', text: (error as Error).message }]
-      };
-    }
+    return withToolSpan(this.name, async (span) => {
+      try {
+        const input = this.inputSchema.parse(rawInput);
+        const result = await this.execute(input);
+        if (result.isError) {
+          span.setAttribute('tool.error', true);
+        }
+        return result;
+      } catch (error) {
+        span.setAttribute('tool.error', true);
+        return {
+          isError: true,
+          content: [{ type: 'text', text: (error as Error).message }]
+        };
+      }
+    });
   }
 
   protected abstract execute(
