@@ -50,6 +50,7 @@ export abstract class BaseTool<
         }
         return result;
       } catch (error) {
+        span.setAttribute('tool.error', true);
         return {
           isError: true,
           content: [{ type: 'text', text: (error as Error).message }]
