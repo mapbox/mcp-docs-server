@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.3.0 - 2026-04-15
+
 ### Add OpenTelemetry tracing
 
 - Added `src/utils/tracing.ts` with `initializeTracing()`, `shutdownTracing()`, `getTracer()`, and `withToolSpan()` — mirrors the tracing implementation in `mcp-server` and `mcp-devkit-server`
