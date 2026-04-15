@@ -16,6 +16,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "baseUrl": "."
+    "types": ["node"]
   }
 }

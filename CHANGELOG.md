@@ -1,5 +1,9 @@
 ## Unreleased
 
+### Dependencies
+
+- **Upgrade `tshy` to `^4.1.1`, `vitest` to `^4.1.4`, `typescript` to `^6.0.2`** — removed deprecated `baseUrl` from `tsconfig.base.json` (TS6), added `"types": ["node"]` (required because tshy compiles from `.tshy/` and does not auto-discover `@types/node` in CI); downgraded `@types/node` to `^22.0.0` for LTS consistency with other repos; bumped `typescript-eslint` packages to `^8.58.2` for TypeScript 6 support
+
 ## 0.2.1 - 2026-04-01
 
 ### Security
