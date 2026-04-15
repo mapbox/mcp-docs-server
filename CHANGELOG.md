@@ -1,5 +1,11 @@
 ## Unreleased
 
+### Raise `docCache` per-entry limit to 5 MB with size warnings
+
+- **Hard cap raised from 2 MB → 5 MB** — allows `llms-full.txt` files (Style Spec 466 KB, iOS Nav 696 KB, GL JS 1.6 MB) to be cached after being fetched via `get_document_tool`
+- **Warning at 1 MB** — `console.warn` when an entry between 1 MB and 5 MB is cached, so operators can see large entries in server logs
+- **Warning on rejection** — entries exceeding the 5 MB cap now log `[docCache] Entry too large to cache` instead of being silently dropped
+
 ### Dependencies
 
 - **Upgrade `tshy` to `^4.1.1`, `vitest` to `^4.1.4`, `typescript` to `^6.0.2`** — removed deprecated `baseUrl` from `tsconfig.base.json` (TS6), added `"types": ["node"]` (required because tshy compiles from `.tshy/` and does not auto-discover `@types/node` in CI); downgraded `@types/node` to `^22.0.0` for LTS consistency with other repos; bumped `typescript-eslint` packages to `^8.58.2` for TypeScript 6 support

@@ -8,7 +8,8 @@ const DEFAULT_TTL_MS = parseInt(
 
 // Cache limits
 const MAX_ENTRIES = 512;
-export const MAX_ENTRY_BYTES = 2 * 1024 * 1024; // 2 MB per entry
+export const MAX_ENTRY_BYTES = 5 * 1024 * 1024; // 5 MB hard cap per entry
+const LARGE_ENTRY_WARNING_BYTES = 1 * 1024 * 1024; // warn at 1 MB
 const MAX_TOTAL_BYTES = 50 * 1024 * 1024; // 50 MB total
 
 interface CacheEntry {
@@ -55,7 +56,15 @@ class DocCache {
   set(url: string, content: string, ttlMs: number = DEFAULT_TTL_MS): void {
     const bytes = Buffer.byteLength(content, 'utf8');
     if (bytes > MAX_ENTRY_BYTES) {
-      return; // Silently reject oversized entries
+      console.warn(
+        `[docCache] Entry too large to cache (${(bytes / 1024 / 1024).toFixed(1)} MB, limit ${MAX_ENTRY_BYTES / 1024 / 1024} MB): ${url}`
+      );
+      return;
+    }
+    if (bytes > LARGE_ENTRY_WARNING_BYTES) {
+      console.warn(
+        `[docCache] Caching large entry (${(bytes / 1024 / 1024).toFixed(1)} MB): ${url}`
+      );
     }
 
     const key = normalizeCacheKey(url);
