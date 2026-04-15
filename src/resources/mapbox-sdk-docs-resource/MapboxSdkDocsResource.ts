@@ -8,22 +8,25 @@ import type {
   ServerRequest
 } from '@modelcontextprotocol/sdk/types.js';
 import type { HttpRequest } from '../../utils/types.js';
-import { docCache } from '../../utils/docCache.js';
 import { BaseResource } from '../BaseResource.js';
-import {
-  parseDocSections,
-  filterSectionsByCategory,
-  sectionsToMarkdown
-} from '../utils/docParser.js';
+import { fetchCachedText } from '../../utils/docFetcher.js';
 
 /**
- * Resource providing Mapbox SDK documentation
+ * Resource providing Mapbox GL JS SDK documentation.
+ * Fetches the Mapbox GL JS llms.txt index which lists all GL JS guides,
+ * API reference pages, and examples with direct links to each page.
+ * GL JS is the primary web mapping SDK; use get_document_tool to fetch
+ * full content of any listed page.
  */
 export class MapboxSdkDocsResource extends BaseResource {
   readonly name = 'Mapbox SDK Documentation';
   readonly uri = 'resource://mapbox-sdk-docs';
   readonly description =
-    'Mapbox SDK and client library documentation for mobile (iOS, Android, Flutter) and web (Mapbox GL JS, Search JS) platforms';
+    'Mapbox GL JS documentation index: guides for getting started, adding data, ' +
+    'globe/projections, indoor mapping, gestures, styling layers, and migration. ' +
+    'Also includes links to API reference and code examples. ' +
+    'For mobile/native SDKs (iOS, Android, Flutter), use resource://mapbox-reference ' +
+    'to discover their documentation URLs.';
   readonly mimeType = 'text/markdown';
 
   private httpRequest: HttpRequest;
@@ -38,36 +41,17 @@ export class MapboxSdkDocsResource extends BaseResource {
     _extra: RequestHandlerExtra<ServerRequest, ServerNotification>
   ): Promise<ReadResourceResult> {
     try {
-      const LLMS_TXT_URL = 'https://docs.mapbox.com/llms.txt';
-      let content = docCache.get(LLMS_TXT_URL);
-      if (!content) {
-        const response = await this.httpRequest(LLMS_TXT_URL, {
-          headers: {
-            Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch Mapbox documentation: ${response.statusText}`
-          );
-        }
-
-        content = await response.text();
-        docCache.set(LLMS_TXT_URL, content);
-      }
-
-      // Parse and filter for SDK sections only
-      const allSections = parseDocSections(content);
-      const sdkSections = filterSectionsByCategory(allSections, 'sdks');
-      const sdkContent = sectionsToMarkdown(sdkSections);
+      const content = await fetchCachedText(
+        'https://docs.mapbox.com/mapbox-gl-js/llms.txt',
+        this.httpRequest
+      );
 
       return {
         contents: [
           {
             uri: uri.href,
             mimeType: this.mimeType,
-            text: `# Mapbox SDK Documentation\n\n${sdkContent}`
+            text: content
           }
         ]
       };

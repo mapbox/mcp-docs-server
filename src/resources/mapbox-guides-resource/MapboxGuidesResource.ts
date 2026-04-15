@@ -8,22 +8,22 @@ import type {
   ServerRequest
 } from '@modelcontextprotocol/sdk/types.js';
 import type { HttpRequest } from '../../utils/types.js';
-import { docCache } from '../../utils/docCache.js';
 import { BaseResource } from '../BaseResource.js';
-import {
-  parseDocSections,
-  filterSectionsByCategory,
-  sectionsToMarkdown
-} from '../utils/docParser.js';
+import { fetchCachedText } from '../../utils/docFetcher.js';
 
 /**
- * Resource providing Mapbox guides and tutorials
+ * Resource providing Mapbox guides, tutorials, and help articles.
+ * Fetches from docs.mapbox.com/help/llms.txt which contains the full
+ * Mapbox Help Center index: troubleshooting guides, how-to tutorials,
+ * glossary, account setup, billing, and platform-specific walkthroughs.
  */
 export class MapboxGuidesResource extends BaseResource {
   readonly name = 'Mapbox Guides';
   readonly uri = 'resource://mapbox-guides';
   readonly description =
-    'Mapbox guides, tutorials, and how-tos including Studio Manual, map design guides, and best practices';
+    'Mapbox Help Center documentation: troubleshooting guides, how-to tutorials, ' +
+    'glossary, account and billing setup, and walkthroughs for common developer tasks. ' +
+    'Use this for conceptual guidance and step-by-step instructions.';
   readonly mimeType = 'text/markdown';
 
   private httpRequest: HttpRequest;
@@ -38,36 +38,17 @@ export class MapboxGuidesResource extends BaseResource {
     _extra: RequestHandlerExtra<ServerRequest, ServerNotification>
   ): Promise<ReadResourceResult> {
     try {
-      const LLMS_TXT_URL = 'https://docs.mapbox.com/llms.txt';
-      let content = docCache.get(LLMS_TXT_URL);
-      if (!content) {
-        const response = await this.httpRequest(LLMS_TXT_URL, {
-          headers: {
-            Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch Mapbox documentation: ${response.statusText}`
-          );
-        }
-
-        content = await response.text();
-        docCache.set(LLMS_TXT_URL, content);
-      }
-
-      // Parse and filter for guide sections only
-      const allSections = parseDocSections(content);
-      const guideSections = filterSectionsByCategory(allSections, 'guides');
-      const guideContent = sectionsToMarkdown(guideSections);
+      const content = await fetchCachedText(
+        'https://docs.mapbox.com/help/llms.txt',
+        this.httpRequest
+      );
 
       return {
         contents: [
           {
             uri: uri.href,
             mimeType: this.mimeType,
-            text: `# Mapbox Guides\n\n${guideContent}`
+            text: content
           }
         ]
       };

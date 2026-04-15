@@ -8,8 +8,8 @@ import type {
   ServerRequest
 } from '@modelcontextprotocol/sdk/types.js';
 import type { HttpRequest } from '../../utils/types.js';
-import { docCache } from '../../utils/docCache.js';
 import { BaseResource } from '../BaseResource.js';
+import { fetchCachedText } from '../../utils/docFetcher.js';
 import {
   parseDocSections,
   filterSectionsByCategory,
@@ -17,13 +17,17 @@ import {
 } from '../utils/docParser.js';
 
 /**
- * Resource providing Mapbox examples and playgrounds
+ * Resource providing links to Mapbox interactive examples and playgrounds.
+ * Extracts the examples/playground/demo sections from the root llms.txt
+ * catalog, which lists API playgrounds, demo apps, and open-code projects.
  */
 export class MapboxExamplesResource extends BaseResource {
   readonly name = 'Mapbox Examples';
   readonly uri = 'resource://mapbox-examples';
   readonly description =
-    'Mapbox code examples, API playgrounds, and interactive demos for testing and learning';
+    'Mapbox interactive API playgrounds, demo applications, and code examples. ' +
+    'Includes playground URLs for Directions, Search Box, Static Images, ' +
+    'isochrone, Matrix APIs, and demo apps for real estate, store locator, etc.';
   readonly mimeType = 'text/markdown';
 
   private httpRequest: HttpRequest;
@@ -38,26 +42,12 @@ export class MapboxExamplesResource extends BaseResource {
     _extra: RequestHandlerExtra<ServerRequest, ServerNotification>
   ): Promise<ReadResourceResult> {
     try {
-      const LLMS_TXT_URL = 'https://docs.mapbox.com/llms.txt';
-      let content = docCache.get(LLMS_TXT_URL);
-      if (!content) {
-        const response = await this.httpRequest(LLMS_TXT_URL, {
-          headers: {
-            Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8'
-          }
-        });
+      const content = await fetchCachedText(
+        'https://docs.mapbox.com/llms.txt',
+        this.httpRequest
+      );
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch Mapbox documentation: ${response.statusText}`
-          );
-        }
-
-        content = await response.text();
-        docCache.set(LLMS_TXT_URL, content);
-      }
-
-      // Parse and filter for example sections only
+      // Extract playground/demo/example sections from the catalog index
       const allSections = parseDocSections(content);
       const exampleSections = filterSectionsByCategory(allSections, 'examples');
       const exampleContent = sectionsToMarkdown(exampleSections);

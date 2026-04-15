@@ -8,22 +8,25 @@ import type {
   ServerRequest
 } from '@modelcontextprotocol/sdk/types.js';
 import type { HttpRequest } from '../../utils/types.js';
-import { docCache } from '../../utils/docCache.js';
 import { BaseResource } from '../BaseResource.js';
-import {
-  parseDocSections,
-  filterSectionsByCategory,
-  sectionsToMarkdown
-} from '../utils/docParser.js';
+import { fetchCachedText } from '../../utils/docFetcher.js';
 
 /**
- * Resource providing Mapbox reference documentation
+ * Resource providing the complete Mapbox documentation catalog.
+ * Fetches the root llms.txt which is now a structured index of every
+ * Mapbox product and documentation section, each with a link to its
+ * own llms.txt file. Use this to discover what documentation is available
+ * and find URLs to pass to get_document_tool for deeper exploration.
  */
 export class MapboxReferenceResource extends BaseResource {
   readonly name = 'Mapbox Reference';
   readonly uri = 'resource://mapbox-reference';
   readonly description =
-    'Mapbox reference documentation including tilesets, data products, accounts, pricing, and other reference materials';
+    'Complete catalog of all Mapbox products and documentation. ' +
+    'Lists every product section (Maps SDKs, Navigation APIs, Search APIs, ' +
+    'Studio, Style Spec, Tilesets, Data products, Help Center, Atlas, Unity, etc.) ' +
+    "with links to each product's own llms.txt index. Use this to discover " +
+    'what documentation exists and find the right URLs to fetch full docs.';
   readonly mimeType = 'text/markdown';
 
   private httpRequest: HttpRequest;
@@ -38,39 +41,17 @@ export class MapboxReferenceResource extends BaseResource {
     _extra: RequestHandlerExtra<ServerRequest, ServerNotification>
   ): Promise<ReadResourceResult> {
     try {
-      const LLMS_TXT_URL = 'https://docs.mapbox.com/llms.txt';
-      let content = docCache.get(LLMS_TXT_URL);
-      if (!content) {
-        const response = await this.httpRequest(LLMS_TXT_URL, {
-          headers: {
-            Accept: 'text/markdown, text/plain;q=0.9, */*;q=0.8'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            `Failed to fetch Mapbox documentation: ${response.statusText}`
-          );
-        }
-
-        content = await response.text();
-        docCache.set(LLMS_TXT_URL, content);
-      }
-
-      // Parse and filter for reference sections only
-      const allSections = parseDocSections(content);
-      const referenceSections = filterSectionsByCategory(
-        allSections,
-        'reference'
+      const content = await fetchCachedText(
+        'https://docs.mapbox.com/llms.txt',
+        this.httpRequest
       );
-      const referenceContent = sectionsToMarkdown(referenceSections);
 
       return {
         contents: [
           {
             uri: uri.href,
             mimeType: this.mimeType,
-            text: `# Mapbox Reference\n\n${referenceContent}`
+            text: content
           }
         ]
       };
