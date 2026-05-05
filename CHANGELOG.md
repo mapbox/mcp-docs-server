@@ -1,5 +1,7 @@
 ## Unreleased
 
+- chore: upgrade @opentelemetry/\* packages to latest minor versions (#TBD)
+
 ## 0.3.0 - 2026-04-15
 
 ### Add OpenTelemetry tracing
