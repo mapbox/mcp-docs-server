@@ -1,6 +1,6 @@
 ## Unreleased
 
-- security: restrict document tool URL allowlist to documentation hostnames and block access_token params (#34)
+- security: restrict document tool URL allowlist to documentation hosts and block access_token params (#34)
 - chore: upgrade @opentelemetry/\* packages to latest minor versions (#TBD)
 
 ## 0.3.0 - 2026-04-15
