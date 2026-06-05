@@ -124,6 +124,52 @@ describe('BatchGetDocumentsTool', () => {
       expect(result.isError).toBe(true);
       expect(httpRequest).not.toHaveBeenCalled();
     });
+
+    it('rejects api.mapbox.com URLs', async () => {
+      const httpRequest = vi.fn();
+      const tool = new BatchGetDocumentsTool({ httpRequest });
+
+      const result = await tool.run({
+        urls: ['https://api.mapbox.com/styles/v1/owner/styleId']
+      });
+
+      expect(result.isError).toBe(true);
+      expect(httpRequest).not.toHaveBeenCalled();
+    });
+
+    it('rejects URLs containing access_token', async () => {
+      const httpRequest = vi.fn();
+      const tool = new BatchGetDocumentsTool({ httpRequest });
+
+      const result = await tool.run({
+        urls: ['https://docs.mapbox.com/page?access_token=pk.secret']
+      });
+
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as { text: string }).text).toMatch(
+        /access_token/
+      );
+      expect(httpRequest).not.toHaveBeenCalled();
+    });
+
+    it('blocks cache poisoning: tokenized URL cannot prime cache for no-token URL', async () => {
+      // Even if somehow both URLs passed validation (they do not), this test
+      // documents the expected behavior: private data must not leak.
+      // In practice the access_token check above prevents this entirely.
+      const httpRequest = vi.fn().mockResolvedValue(makeResponse('private'));
+      const tool = new BatchGetDocumentsTool({ httpRequest });
+
+      // Attempt the poisoning using an api.mapbox.com URL — must be rejected
+      const poisonResult = await tool.run({
+        urls: [
+          'https://api.mapbox.com/styles/v1/owner/id?access_token=secret',
+          'https://api.mapbox.com/styles/v1/owner/id'
+        ]
+      });
+      expect(poisonResult.isError).toBe(true);
+      expect(httpRequest).not.toHaveBeenCalled();
+      expect(docCache.size).toBe(0);
+    });
   });
 
   describe('HTTP errors', () => {

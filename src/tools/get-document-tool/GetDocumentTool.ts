@@ -11,10 +11,28 @@ import {
   GetDocumentInput
 } from './GetDocumentTool.input.schema.js';
 
+// Explicit allowlist of hostnames this docs tool is permitted to fetch.
+// api.mapbox.com is intentionally excluded — it is a live API that requires
+// auth tokens, not a documentation host. Allowing it would let callers poison
+// the shared cache with token-authorized private responses under no-token keys.
+const ALLOWED_DOC_HOSTNAMES = new Set([
+  'docs.mapbox.com',
+  'mapbox.com',
+  'docs.tilestream.net'
+]);
+
 function isMapboxUrl(url: string): boolean {
   try {
     const { hostname } = new URL(url);
-    return hostname === 'mapbox.com' || hostname.endsWith('.mapbox.com');
+    return ALLOWED_DOC_HOSTNAMES.has(hostname);
+  } catch {
+    return false;
+  }
+}
+
+function hasAccessToken(url: string): boolean {
+  try {
+    return new URL(url).searchParams.has('access_token');
   } catch {
     return false;
   }
@@ -45,7 +63,19 @@ export class GetDocumentTool extends BaseTool<typeof GetDocumentSchema> {
         content: [
           {
             type: 'text',
-            text: `Invalid URL: only mapbox.com URLs are supported. Received: ${input.url}`
+            text: `Invalid URL: only mapbox.com documentation URLs are supported. Received: ${input.url}`
+          }
+        ],
+        isError: true
+      };
+    }
+
+    if (hasAccessToken(input.url)) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Invalid URL: URLs must not contain access_token. Received: ${input.url}`
           }
         ],
         isError: true
