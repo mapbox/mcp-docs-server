@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.3.1 - 2026-06-11
+
 - security: restrict document tool URL allowlist to documentation hosts and block access_token params (#34)
 - chore: upgrade @opentelemetry/\* packages to latest minor versions (#TBD)
 
