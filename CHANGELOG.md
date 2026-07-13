@@ -1,5 +1,7 @@
 ## Unreleased
 
+- docs: note in CONTRIBUTING.md that unsolicited third-party directory/discovery listing PRs are out of scope and will be closed without review
+
 ## 0.3.1 - 2026-06-11
 
 - security: restrict document tool URL allowlist to documentation hosts and block access_token params (#34)
