@@ -18,6 +18,10 @@ npm test
 - All CI checks must pass before merging (lint, format, tests)
 - At least one maintainer approval is required
 
+### Out of Scope
+
+We do not accept PRs that add listings, badges, or manifest files for third-party directories, registries, or "discovery" services (e.g. unsolicited `README.md` badges linking to an external site, or manifest files with no functional purpose in this project). These will be closed without review.
+
 ## Code Standards
 
 ### TypeScript
