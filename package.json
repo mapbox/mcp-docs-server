@@ -13,6 +13,7 @@
     "build": "npm run prepare && tshy && npm run generate-version && node scripts/add-shebang.cjs",
     "changelog:prepare-release": "node scripts/prepare-changelog-release.cjs",
     "check-llms-links": "node scripts/check-llms-links.cjs",
+    "check-llms-links:deep": "node scripts/check-llms-links.cjs --deep",
     "format": "prettier --check \"./src/**/*.{ts,tsx,js,json,md}\"",
     "format:fix": "prettier --write \"./src/**/*.{ts,tsx,js,json,md}\"",
     "generate-version": "node scripts/build-helpers.cjs generate-version",
