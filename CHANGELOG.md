@@ -1,5 +1,6 @@
 ## Unreleased
 
+- chore: add `scripts/check-llms-links.cjs` (`npm run check-llms-links`) to report broken links across all `llms.txt` files exposed from docs.mapbox.com, and flag drift between the curated list in `docsSearchIndex.ts` and the live root index (#TBD)
 - docs: note in CONTRIBUTING.md that unsolicited third-party directory/discovery listing PRs are out of scope and will be closed without review
 
 ## 0.3.1 - 2026-06-11
