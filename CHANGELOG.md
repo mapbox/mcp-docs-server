@@ -1,5 +1,6 @@
 ## Unreleased
 
+- chore: bump `@modelcontextprotocol/sdk` to `1.30.0`. Verified this version's own `SUPPORTED_PROTOCOL_VERSIONS` constant does not include the `2026-07-28` spec revision (https://blog.modelcontextprotocol.io/posts/2026-07-28/) — this repo uses neither elicitation nor sampling, so that migration is lower-priority here regardless; tracked in #40.
 - chore: add `scripts/check-llms-links.cjs` (`npm run check-llms-links`) to report broken links across all `llms.txt` files exposed from docs.mapbox.com, and flag drift between the curated list in `docsSearchIndex.ts` and the live root index; `npm run check-llms-links:deep` (`--deep`) additionally crawls every docs.mapbox.com sub-link referenced in those files (currently ~1,400 URLs) to proactively catch broken doc pages before customers hit them (#39)
 - docs: note in CONTRIBUTING.md that unsolicited third-party directory/discovery listing PRs are out of scope and will be closed without review
 
