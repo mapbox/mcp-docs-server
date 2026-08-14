@@ -91,6 +91,13 @@ test/                  # Mirrors src/ structure
 - Never commit API keys, tokens, or secrets
 - All documentation tools work without a Mapbox access token
 - If a tool requires a token, accept it as an explicit input parameter (not an env variable)
+- **Security-sensitive change review:** for changes touching authentication, credentials, tokens, or session/connection state where an external user is involved, review needs more than a diff read:
+  1. Run the `/security-review` skill. It's good at authentication, authorization, injection, and crypto issues, but its own instructions explicitly exclude denial-of-service and resource-exhaustion findings, so a clean result doesn't mean those are covered.
+  2. Write down 2-3 concrete adversarial or misuse scenarios for the change (e.g. "what if this instance is shared across two concurrent sessions", "what if a client returns a value far larger than expected", "what if this token isn't verified the way we assume") and check the code against each one.
+  3. Add a regression test that fails against the pre-fix code for anything found this way — proof the issue was real, not just "looks fixed."
+  4. Get 2+ reviewer approvals as a floor, treated as a backstop rather than the primary defense.
+
+  See `mcp-devkit-server` PR #57 for a worked example: a cross-session credential-hijack bug and several resource-exhaustion gaps got past the original implementation and a full round of human review, and were only caught by later, independently-run adversarial passes.
 
 ## Changelog Format
 
