@@ -138,6 +138,23 @@ export function getTracer() {
 }
 
 /**
+ * The connected client's `clientInfo` (name/version), as reported in its
+ * `initialize` request. There is exactly one client per stdio server
+ * process, so this is safe as module-level state; set once via
+ * `setClientInfo` after the initialize handshake completes (see
+ * `server.server.oninitialized` in index.ts) and read by every tool span
+ * created afterward, so traces can be filtered/grouped by which MCP client
+ * (Claude Desktop, Cursor, VS Code, etc.) made the call.
+ */
+let currentClientInfo: { name?: string; version?: string } | undefined;
+
+export function setClientInfo(
+  info: { name?: string; version?: string } | undefined
+): void {
+  currentClientInfo = info;
+}
+
+/**
  * Create a span for tool execution and run the callback within its context.
  * Automatically marks the span success or error and ends it.
  */
@@ -150,7 +167,13 @@ export async function withToolSpan<T>(
     kind: SpanKind.INTERNAL,
     attributes: {
       'tool.name': toolName,
-      'operation.type': 'tool_execution'
+      'operation.type': 'tool_execution',
+      ...(currentClientInfo?.name && {
+        'mcp.client.name': currentClientInfo.name
+      }),
+      ...(currentClientInfo?.version && {
+        'mcp.client.version': currentClientInfo.version
+      })
     }
   });
 
