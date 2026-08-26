@@ -7,7 +7,11 @@ import { parseToolConfigFromArgs, filterTools } from './config/toolConfig.js';
 import { getCoreTools } from './tools/toolRegistry.js';
 import { getAllResources } from './resources/resourceRegistry.js';
 import { getVersionInfo } from './utils/versionUtils.js';
-import { initializeTracing, shutdownTracing } from './utils/tracing.js';
+import {
+  initializeTracing,
+  shutdownTracing,
+  setClientInfo
+} from './utils/tracing.js';
 
 // Parse configuration from command-line arguments
 const config = parseToolConfigFromArgs();
@@ -27,7 +31,8 @@ const server = new McpServer(
   {
     capabilities: {
       tools: {},
-      resources: {}
+      resources: {},
+      logging: {}
     }
   }
 );
@@ -45,6 +50,23 @@ resources.forEach((resource) => {
 
 async function main() {
   await initializeTracing();
+
+  // Registered before connect() so it's already in place the moment the
+  // client's initialize handshake completes. getClientVersion() is only
+  // populated once the server has processed the client's `initialize`
+  // request -- reading it synchronously right after `server.connect()`
+  // races that request, since connect() only waits for the transport to
+  // start, not for the handshake to finish.
+  server.server.oninitialized = () => {
+    const clientInfo = server.server.getClientVersion();
+    // Recorded so every subsequent tool-execution span carries it too --
+    // see setClientInfo's doc comment in tracing.ts.
+    setClientInfo(clientInfo);
+    server.server.sendLoggingMessage({
+      level: 'info',
+      data: `Client identified as: ${clientInfo?.name ?? 'unknown'} v${clientInfo?.version ?? 'unknown'}`
+    });
+  };
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
