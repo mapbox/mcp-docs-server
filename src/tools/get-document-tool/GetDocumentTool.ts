@@ -41,7 +41,7 @@ function hasAccessToken(url: string): boolean {
 export class GetDocumentTool extends BaseTool<typeof GetDocumentSchema> {
   name = 'get_document_tool';
   description =
-    'Fetch the full content of a specific Mapbox documentation page by URL. Use this after get_latest_mapbox_docs_tool to follow a link from the index and retrieve the complete page content. For fetching multiple pages at once, use batch_get_documents_tool instead.';
+    'Fetch the full content of a specific Mapbox documentation page by URL. Use this after search_mapbox_docs_tool to follow a link from the search results and retrieve the complete page content. For fetching multiple pages at once, use batch_get_documents_tool instead.';
   readonly annotations = {
     readOnlyHint: true,
     destructiveHint: false,
