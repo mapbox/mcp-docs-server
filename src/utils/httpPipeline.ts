@@ -161,12 +161,36 @@ export class RetryPolicy implements HttpPolicy {
   }
 }
 
+/**
+ * Stops fetch from following redirects. URLs are validated against the docs
+ * host allowlist before the request, and a redirect target would skip that
+ * check. With 'manual', fetch returns the 3xx response itself and the target
+ * is never requested. The override is applied after the caller's options so it
+ * cannot be turned back on per request.
+ */
+export class NoRedirectPolicy implements HttpPolicy {
+  id: string;
+
+  constructor(id?: string) {
+    this.id = id ?? createRandomId('no-redirect-');
+  }
+
+  async handle(
+    input: string | URL | Request,
+    init: RequestInit,
+    next: HttpRequest
+  ): Promise<Response> {
+    return next(input, { ...init, redirect: 'manual' });
+  }
+}
+
 const pipeline = new HttpPipeline();
 const versionInfo = getVersionInfo();
 pipeline.usePolicy(
   UserAgentPolicy.fromVersionInfo(versionInfo, 'system-user-agent-policy')
 );
 pipeline.usePolicy(new RetryPolicy(3, 200, 2000, 'system-retry-policy'));
+pipeline.usePolicy(new NoRedirectPolicy('system-no-redirect-policy'));
 
 export const httpRequest = pipeline.execute.bind(pipeline);
 export const systemHttpPipeline = pipeline;
