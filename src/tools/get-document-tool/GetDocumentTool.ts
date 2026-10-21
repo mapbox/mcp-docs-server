@@ -1,7 +1,7 @@
 // Copyright (c) Mapbox, Inc.
 // Licensed under the MIT License.
 
-import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolResult } from '@modelcontextprotocol/server';
 import { docCache } from '../../utils/docCache.js';
 import { fetchDocContent } from '../../utils/docFetcher.js';
 import type { HttpRequest } from '../../utils/types.js';
