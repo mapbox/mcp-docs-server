@@ -216,7 +216,6 @@ export async function fetchDocContent(
   const tryMarkdown = async (mdUrl: string): Promise<string | null> => {
     try {
       const result = await fetchFollowingDocsRedirects(mdUrl, httpRequest);
-      if ('content' in result) return result.content;
       if (result.response.ok) {
         return await readBodyWithLimit(result.response, MAX_ENTRY_BYTES);
       }
