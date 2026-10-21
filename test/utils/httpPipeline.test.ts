@@ -22,6 +22,9 @@ function listen(
   });
 }
 
+// Deliberate exception to "no real network calls in tests": these use real
+// `fetch` against loopback (127.0.0.1) servers, the only way to prove that
+// `redirect: 'manual'` is honoured by the runtime. Nothing leaves the machine.
 describe('NoRedirectPolicy', () => {
   const servers: Server[] = [];
   afterEach(() => {

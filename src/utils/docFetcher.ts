@@ -87,19 +87,6 @@ const FOLLOWED_REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 class RedirectError extends Error {}
 
 /**
- * Throws if the response is a redirect. The HTTP pipeline does not follow
- * redirects (see NoRedirectPolicy), so a 3xx arrives here as-is. The Location
- * header is deliberately left out of the message: it is untrusted input and
- * the message is returned to the model.
- */
-function assertNotRedirect(response: Response): void {
-  if (response.status >= 300 && response.status < 400) {
-    void response.body?.cancel();
-    throw new RedirectError(`${response.status} Redirect not followed`);
-  }
-}
-
-/**
  * Resolve the Location of a redirect response against the URL that was
  * requested. Returns null unless the status is one we follow and the target is
  * a different, allowed documentation URL without an access_token.
@@ -119,14 +106,44 @@ function redirectTarget(response: Response, current: string): string | null {
 }
 
 /**
+ * Map a URL on the effective docs host back to docs.mapbox.com. Needed because
+ * toMarkdownUrl only matches docs.mapbox.com and applies the host override
+ * itself.
+ */
+function toCanonicalDocsUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === getDocsHostname()) {
+      parsed.hostname = DOCS_HOSTNAME;
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+/**
  * GET a URL, following up to MAX_REDIRECTS redirects. Every hop is validated
  * with isDocsUrl() before it is requested, so a redirect can only lead to
  * another documentation URL. Throws RedirectError otherwise.
+ *
+ * `beforeFollow` is called with each validated hop before it is requested. If
+ * it returns content, that content is returned and the hop is not requested.
  */
 async function fetchFollowingDocsRedirects(
   url: string,
   httpRequest: HttpRequest
-): Promise<{ response: Response; finalUrl: string }> {
+): Promise<{ response: Response; finalUrl: string }>;
+async function fetchFollowingDocsRedirects(
+  url: string,
+  httpRequest: HttpRequest,
+  beforeFollow: (next: string) => Promise<string | null>
+): Promise<{ response: Response; finalUrl: string } | { content: string }>;
+async function fetchFollowingDocsRedirects(
+  url: string,
+  httpRequest: HttpRequest,
+  beforeFollow?: (next: string) => Promise<string | null>
+): Promise<{ response: Response; finalUrl: string } | { content: string }> {
   let current = url;
   for (let hops = 0; ; hops++) {
     const response = await httpRequest(current, {});
@@ -139,6 +156,8 @@ async function fetchFollowingDocsRedirects(
     if (next === null) {
       throw new RedirectError(`${response.status} Redirect not followed`);
     }
+    const early = await beforeFollow?.(next);
+    if (early != null) return { content: early };
     current = next;
   }
 }
@@ -155,11 +174,21 @@ export async function fetchCachedText(
   const cached = docCache.get(url);
   if (cached !== null) return cached;
 
-  const response = await httpRequest(url, {});
-  assertNotRedirect(response);
+  const { response, finalUrl } = await fetchFollowingDocsRedirects(
+    url,
+    httpRequest
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+  }
+  // A redirected index must still be text, not the HTML page it moved to.
+  if (
+    finalUrl !== url &&
+    response.headers.get('content-type')?.includes('text/html')
+  ) {
+    void response.body?.cancel();
+    throw new Error(`Unexpected content type for ${url}`);
   }
 
   const content = await response.text();
@@ -186,13 +215,12 @@ export async function fetchDocContent(
 ): Promise<string> {
   const tryMarkdown = async (mdUrl: string): Promise<string | null> => {
     try {
-      const { response } = await fetchFollowingDocsRedirects(
-        mdUrl,
-        httpRequest
-      );
-      if (response.ok)
-        return await readBodyWithLimit(response, MAX_ENTRY_BYTES);
-      void response.body?.cancel();
+      const result = await fetchFollowingDocsRedirects(mdUrl, httpRequest);
+      if ('content' in result) return result.content;
+      if (result.response.ok) {
+        return await readBodyWithLimit(result.response, MAX_ENTRY_BYTES);
+      }
+      void result.response.body?.cancel();
     } catch (error) {
       if (!(error instanceof RedirectError)) throw error;
     }
@@ -205,25 +233,35 @@ export async function fetchDocContent(
     if (markdown !== null) return markdown;
   }
 
-  const fetchUrl = withTrailingSlash(applyHostOverride(url));
-  const { response, finalUrl } = await fetchFollowingDocsRedirects(
-    fetchUrl,
-    httpRequest
-  );
+  // For a moved page, try the .md variant of the new location before
+  // requesting its HTML. `next` has already passed isDocsUrl(); the derived
+  // .md URL is checked again before it is requested. A single request, no
+  // redirects: keeps the total request count bounded by MAX_REDIRECTS.
+  const probed = new Set<string>(mdUrl ? [mdUrl] : []);
+  const tryMovedMarkdown = async (next: string): Promise<string | null> => {
+    const movedMdUrl = toMarkdownUrl(toCanonicalDocsUrl(next));
+    if (!movedMdUrl || !isDocsUrl(movedMdUrl) || hasAccessToken(movedMdUrl)) {
+      return null;
+    }
+    if (probed.has(movedMdUrl)) return null;
+    probed.add(movedMdUrl);
+    const response = await httpRequest(movedMdUrl, {});
+    if (response.ok) return readBodyWithLimit(response, MAX_ENTRY_BYTES);
+    void response.body?.cancel();
+    return null;
+  };
 
+  const fetchUrl = withTrailingSlash(applyHostOverride(url));
+  const result = await fetchFollowingDocsRedirects(
+    fetchUrl,
+    httpRequest,
+    tryMovedMarkdown
+  );
+  if ('content' in result) return result.content;
+
+  const { response } = result;
   if (!response.ok) {
     throw new Error(`${response.status} ${response.statusText}`);
-  }
-
-  if (finalUrl !== fetchUrl) {
-    const movedMdUrl = toMarkdownUrl(finalUrl);
-    if (movedMdUrl) {
-      const markdown = await tryMarkdown(movedMdUrl);
-      if (markdown !== null) {
-        void response.body?.cancel();
-        return markdown;
-      }
-    }
   }
 
   return readBodyWithLimit(response, MAX_ENTRY_BYTES);

@@ -71,6 +71,7 @@ export class MyTool extends BaseTool<
 - **Never patch `global.fetch`** — always use the injected `httpRequest`
 - The shared `httpRequest` from `httpPipeline.ts` adds User-Agent headers, 1-hour caching, and retry logic
 - Pass `httpRequest` to tool/resource constructors for testability
+- The shared pipeline does **not** follow redirects (`NoRedirectPolicy` sets `redirect: 'manual'`), so a tool calling any host gets the raw 3xx response. Docs fetches follow redirects themselves in `docFetcher.ts`, only to URLs that pass `isDocsUrl()` (`docUrl.ts`)
 
 ### Resource Architecture
 
@@ -123,6 +124,6 @@ npm run inspect:dev      # MCP Inspector against source (tsx, no build needed)
 
 - **No global patching**: use `httpRequest` from the pipeline
 - **Dependency injection**: tools and resources receive `httpRequest` in constructor
-- **No real network calls in tests**: mock `httpRequest` with `vi.fn()`
+- **No real network calls in tests**: mock `httpRequest` with `vi.fn()`. The one exception is `test/utils/httpPipeline.test.ts`, which uses loopback-only `node:http` servers to verify real `fetch` redirect behaviour
 - **Strict types**: avoid `any`
 - **No access token env var**: docs tools are token-free; if a token is needed, it's an input field

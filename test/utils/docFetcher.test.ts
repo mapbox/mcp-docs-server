@@ -305,7 +305,6 @@ describe('following allowed redirects', () => {
     expect(httpRequest.mock.calls.map((c) => c[0])).toEqual([
       'https://docs.mapbox.com/help/getting-started/attribution.md',
       'https://docs.mapbox.com/help/getting-started/attribution/',
-      'https://docs.mapbox.com/help/dive-deeper/attribution/',
       'https://docs.mapbox.com/help/dive-deeper/attribution.md'
     ]);
   });
@@ -399,8 +398,9 @@ describe('following allowed redirects', () => {
       fetchDocContent('https://docs.mapbox.com/start/', httpRequest)
     ).rejects.toThrow('Too many redirects');
 
-    // .md attempt and fallback: 1 request plus 3 followed hops each
-    expect(httpRequest).toHaveBeenCalledTimes(8);
+    // .md attempt: 1 request plus 3 hops. Fallback: 1 request plus 3 hops,
+    // and one .md probe per validated hop.
+    expect(httpRequest).toHaveBeenCalledTimes(11);
   });
 
   it('follows a redirect to the staging host only when it is the override host', async () => {
@@ -423,5 +423,79 @@ describe('following allowed redirects', () => {
     await expect(
       fetchDocContent('https://docs.mapbox.com/a/', overridden)
     ).resolves.toBe('staging');
+  });
+
+  it('prefers the .md of a moved page on the staging host', async () => {
+    process.env.MAPBOX_DOCS_HOST_OVERRIDE = 'docs.tilestream.net';
+    const httpRequest = routes({
+      'https://docs.tilestream.net/old/': () =>
+        redirect(301, 'https://docs.tilestream.net/new/'),
+      'https://docs.tilestream.net/new.md': () => makeResponse('# New')
+    });
+
+    await expect(
+      fetchDocContent('https://docs.mapbox.com/old/', httpRequest)
+    ).resolves.toBe('# New');
+    expect(httpRequest.mock.calls.map((c) => c[0])).not.toContain(
+      'https://docs.tilestream.net/new/'
+    );
+  });
+
+  it('does not request the .md of a redirect target that is not allowed', async () => {
+    const httpRequest = routes({
+      'https://docs.mapbox.com/old/': () =>
+        redirect(301, 'https://docs.mapbox.com/new/?access_token=pk.x'),
+      'https://docs.mapbox.com/new.md?access_token=pk.x': () =>
+        makeResponse('# leaked')
+    });
+
+    await expect(
+      fetchDocContent('https://docs.mapbox.com/old/', httpRequest)
+    ).rejects.toThrow('301 Redirect not followed');
+    expect(httpRequest.mock.calls.map((c) => c[0])).toEqual([
+      'https://docs.mapbox.com/old.md',
+      'https://docs.mapbox.com/old/'
+    ]);
+  });
+
+  it('fetchCachedText follows a redirect to an allowed docs URL', async () => {
+    const httpRequest = routes({
+      'https://docs.mapbox.com/llms.txt': () => redirect(301, '/docs/llms.txt'),
+      'https://docs.mapbox.com/docs/llms.txt': () => makeResponse('index')
+    });
+
+    await expect(
+      fetchCachedText('https://docs.mapbox.com/llms.txt', httpRequest)
+    ).resolves.toBe('index');
+  });
+
+  it('fetchCachedText rejects a redirect that lands on an HTML page and does not cache it', async () => {
+    const httpRequest = routes({
+      'https://docs.mapbox.com/x/llms.txt': () => redirect(301, '/x/'),
+      'https://docs.mapbox.com/x/': () =>
+        new Response('<html></html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html' }
+        })
+    });
+
+    await expect(
+      fetchCachedText('https://docs.mapbox.com/x/llms.txt', httpRequest)
+    ).rejects.toThrow('Unexpected content type');
+    expect(docCache.get('https://docs.mapbox.com/x/llms.txt')).toBeNull();
+  });
+
+  it('does not probe the same .md URL twice', async () => {
+    const httpRequest = routes({
+      'https://docs.mapbox.com/foo/': () =>
+        redirect(301, 'https://docs.mapbox.com/foo'),
+      'https://docs.mapbox.com/foo': () => makeResponse('<html>foo</html>')
+    });
+
+    await fetchDocContent('https://docs.mapbox.com/foo/', httpRequest);
+    const urls = httpRequest.mock.calls.map((c) => c[0]);
+    expect(
+      urls.filter((u) => u === 'https://docs.mapbox.com/foo.md')
+    ).toHaveLength(1);
   });
 });
