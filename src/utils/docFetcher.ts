@@ -185,7 +185,7 @@ export async function fetchCachedText(
   // A redirected index must still be text, not the HTML page it moved to.
   if (
     finalUrl !== url &&
-    response.headers.get('content-type')?.includes('text/html')
+    response.headers.get('content-type')?.toLowerCase().includes('text/html')
   ) {
     void response.body?.cancel();
     throw new Error(`Unexpected content type for ${url}`);

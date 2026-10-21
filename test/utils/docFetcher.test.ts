@@ -475,7 +475,7 @@ describe('following allowed redirects', () => {
       'https://docs.mapbox.com/x/': () =>
         new Response('<html></html>', {
           status: 200,
-          headers: { 'content-type': 'text/html' }
+          headers: { 'content-type': 'Text/HTML; charset=utf-8' }
         })
     });
 
