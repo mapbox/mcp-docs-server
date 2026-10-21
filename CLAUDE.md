@@ -124,6 +124,6 @@ npm run inspect:dev      # MCP Inspector against source (tsx, no build needed)
 
 - **No global patching**: use `httpRequest` from the pipeline
 - **Dependency injection**: tools and resources receive `httpRequest` in constructor
-- **No real network calls in tests**: mock `httpRequest` with `vi.fn()`. The one exception is `test/utils/httpPipeline.test.ts`, which uses loopback-only `node:http` servers to verify real `fetch` redirect behaviour
+- **No real network calls in tests**: mock `httpRequest` with `vi.fn()`. The one exception is `test/utils/httpPipeline.test.ts`, which uses loopback-only `node:http` servers to verify real `fetch` redirect behavior
 - **Strict types**: avoid `any`
 - **No access token env var**: docs tools are token-free; if a token is needed, it's an input field
