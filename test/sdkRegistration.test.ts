@@ -84,7 +84,7 @@ describe('SDK registration', () => {
     );
     expect(tokenScopes).toBeDefined();
     const { contents } = await client.readResource({ uri: tokenScopes!.uri });
-    expect(contents[0].text).toBeTruthy();
+    expect('text' in contents[0] && contents[0].text).toBeTruthy();
     await client.close();
   });
 });

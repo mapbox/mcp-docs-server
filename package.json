@@ -23,6 +23,7 @@
     "lint:fix": "eslint \"./src/**/*.{ts,tsx}\" \"./test/**/*.{ts,tsx}\" --no-error-on-unmatched-pattern --fix",
     "prepare": "node -e \"if(!process.env.CI&&process.env.HUSKY!=='0'){require('child_process').execSync('husky && node .husky/setup-hooks.js',{stdio:'inherit'})}\"",
     "spellcheck": "cspell \"*.md\" \"src/**/*.ts\" \"test/**/*.ts\"",
+    "typecheck": "tsc -p tsconfig.test.json",
     "sync-manifest": "node scripts/sync-manifest-version.cjs",
     "test": "vitest"
   },
