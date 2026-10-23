@@ -62,7 +62,7 @@ describe('SearchDocsTool', () => {
     const result = await tool.run({ query: 'add a marker', limit: 5 });
 
     expect(result.isError).toBe(false);
-    const text = result.content[0].text as string;
+    const text = (result.content[0] as { text: string }).text;
     expect(text).toContain('Markers');
     expect(text).toContain(
       'https://docs.mapbox.com/mapbox-gl-js/guides/add-your-data/markers.md'
@@ -81,7 +81,9 @@ describe('SearchDocsTool', () => {
     const result = await tool.run({ query: 'xyzzy nonexistent quantum' });
 
     expect(result.isError).toBe(false);
-    expect(result.content[0].text).toBe('No results found.');
+    expect((result.content[0] as { text: string }).text).toBe(
+      'No results found.'
+    );
   });
 
   it('respects the limit parameter', async () => {
@@ -97,7 +99,7 @@ describe('SearchDocsTool', () => {
     const result = await tool.run({ query: 'map', limit: 2 });
 
     expect(result.isError).toBe(false);
-    const text = result.content[0].text as string;
+    const text = (result.content[0] as { text: string }).text;
     // Numbered list — should not contain "3."
     expect(text).toContain('1.');
     expect(text).toContain('2.');
@@ -117,7 +119,7 @@ describe('SearchDocsTool', () => {
     const result = await tool.run({ query: 'directions', limit: 5 });
 
     expect(result.isError).toBe(false);
-    const text = result.content[0].text as string;
+    const text = (result.content[0] as { text: string }).text;
     expect(text).toContain('Directions API');
     expect(text).toContain('API Reference');
   });
@@ -133,7 +135,7 @@ describe('SearchDocsTool', () => {
     const tool = new SearchDocsTool({ httpRequest });
     const result = await tool.run({ query: 'geocoding', limit: 10 });
 
-    const text = result.content[0].text as string;
+    const text = (result.content[0] as { text: string }).text;
     // Count occurrences of the URL — should appear only once
     const count = (
       text.match(/docs\.mapbox\.com\/api\/search\/geocoding/g) ?? []
@@ -151,7 +153,9 @@ describe('SearchDocsTool', () => {
     const tool = new SearchDocsTool({ httpRequest });
     const result = await tool.run({ query: 'getting started' });
 
-    expect(result.content[0].text).toContain('Mapbox GL JS');
+    expect((result.content[0] as { text: string }).text).toContain(
+      'Mapbox GL JS'
+    );
   });
 
   it('gracefully skips sources that fail to fetch', async () => {
@@ -167,7 +171,7 @@ describe('SearchDocsTool', () => {
 
     // Should still return results from the working source
     expect(result.isError).toBe(false);
-    expect(result.content[0].text).toContain('Markers');
+    expect((result.content[0] as { text: string }).text).toContain('Markers');
   });
 
   it('uses cached content on repeated searches without re-fetching', async () => {

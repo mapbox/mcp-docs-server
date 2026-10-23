@@ -3,8 +3,8 @@
  * Run with: npx tsx scripts/test-resources.ts
  */
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
+import { Client } from '@modelcontextprotocol/client';
 
 const RESOURCES_TO_TEST = [
   {

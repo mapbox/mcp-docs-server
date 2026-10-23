@@ -1,8 +1,8 @@
 // Copyright (c) Mapbox, Inc.
 // Licensed under the MIT License.
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
+import { McpServer } from '@modelcontextprotocol/server';
 import { parseToolConfigFromArgs, filterTools } from './config/toolConfig.js';
 import { getCoreTools } from './tools/toolRegistry.js';
 import { getAllResources } from './resources/resourceRegistry.js';
