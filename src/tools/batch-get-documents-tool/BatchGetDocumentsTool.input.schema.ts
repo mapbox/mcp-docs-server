@@ -9,7 +9,7 @@ export const BatchGetDocumentsSchema = z.object({
     .min(1)
     .max(20)
     .describe(
-      'Array of Mapbox documentation page URLs to fetch (max 20). All must be mapbox.com URLs.'
+      'Array of Mapbox documentation page URLs to fetch (max 20). All must be https://docs.mapbox.com URLs.'
     )
 });
 

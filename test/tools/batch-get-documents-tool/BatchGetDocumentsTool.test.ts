@@ -118,11 +118,39 @@ describe('BatchGetDocumentsTool', () => {
       const tool = new BatchGetDocumentsTool({ httpRequest });
 
       const result = await tool.run({
-        urls: ['https://evil.com/page']
+        urls: ['https://example.com/page']
       });
 
       expect(result.isError).toBe(true);
       expect(httpRequest).not.toHaveBeenCalled();
+    });
+
+    it('rejects bare mapbox.com URLs without making a request', async () => {
+      const httpRequest = vi.fn();
+      const tool = new BatchGetDocumentsTool({ httpRequest });
+
+      const result = await tool.run({
+        urls: ['https://mapbox.com/about']
+      });
+
+      expect(result.isError).toBe(true);
+      expect(httpRequest).not.toHaveBeenCalled();
+    });
+
+    it('reports a per-URL error when a page answers with a redirect', async () => {
+      const httpRequest = vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 302,
+          headers: { location: 'https://example.com/other' }
+        })
+      );
+      const tool = new BatchGetDocumentsTool({ httpRequest });
+
+      const result = await tool.run({ urls: ['https://docs.mapbox.com/page'] });
+
+      const parsed = JSON.parse((result.content[0] as { text: string }).text);
+      expect(parsed[0].error).toMatch(/Redirect not followed/);
+      expect(docCache.get('https://docs.mapbox.com/page')).toBeNull();
     });
 
     it('rejects api.mapbox.com URLs', async () => {
@@ -152,21 +180,18 @@ describe('BatchGetDocumentsTool', () => {
       expect(httpRequest).not.toHaveBeenCalled();
     });
 
-    it('blocks cache poisoning: tokenized URL cannot prime cache for no-token URL', async () => {
-      // Even if somehow both URLs passed validation (they do not), this test
-      // documents the expected behavior: private data must not leak.
-      // In practice the access_token check above prevents this entirely.
+    it('does not cache entries for api.mapbox.com URLs with or without a token', async () => {
+      // api.mapbox.com URLs are rejected up front, so nothing is fetched or cached.
       const httpRequest = vi.fn().mockResolvedValue(makeResponse('private'));
       const tool = new BatchGetDocumentsTool({ httpRequest });
 
-      // Attempt the poisoning using an api.mapbox.com URL — must be rejected
-      const poisonResult = await tool.run({
+      const result = await tool.run({
         urls: [
           'https://api.mapbox.com/styles/v1/owner/id?access_token=secret',
           'https://api.mapbox.com/styles/v1/owner/id'
         ]
       });
-      expect(poisonResult.isError).toBe(true);
+      expect(result.isError).toBe(true);
       expect(httpRequest).not.toHaveBeenCalled();
       expect(docCache.size).toBe(0);
     });
