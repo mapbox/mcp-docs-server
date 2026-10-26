@@ -4,39 +4,13 @@
 import { CallToolResult } from '@modelcontextprotocol/server';
 import { docCache, normalizeCacheKey } from '../../utils/docCache.js';
 import { fetchDocContent } from '../../utils/docFetcher.js';
+import { hasAccessToken, isDocsUrl } from '../../utils/docUrl.js';
 import type { HttpRequest } from '../../utils/types.js';
 import { BaseTool } from '../BaseTool.js';
 import {
   BatchGetDocumentsSchema,
   BatchGetDocumentsInput
 } from './BatchGetDocumentsTool.input.schema.js';
-
-// Explicit allowlist of hostnames this docs tool is permitted to fetch.
-// api.mapbox.com is intentionally excluded — it is a live API that requires
-// auth tokens, not a documentation host. Allowing it would let callers poison
-// the shared cache with token-authorized private responses under no-token keys.
-const ALLOWED_DOC_HOSTNAMES = new Set([
-  'docs.mapbox.com',
-  'mapbox.com',
-  'docs.tilestream.net'
-]);
-
-function isMapboxUrl(url: string): boolean {
-  try {
-    const { hostname } = new URL(url);
-    return ALLOWED_DOC_HOSTNAMES.has(hostname);
-  } catch {
-    return false;
-  }
-}
-
-function hasAccessToken(url: string): boolean {
-  try {
-    return new URL(url).searchParams.has('access_token');
-  } catch {
-    return false;
-  }
-}
 
 type DocumentResult =
   | { url: string; content: string }
@@ -66,13 +40,13 @@ export class BatchGetDocumentsTool extends BaseTool<
   protected async execute(
     input: BatchGetDocumentsInput
   ): Promise<CallToolResult> {
-    const invalidUrls = input.urls.filter((url) => !isMapboxUrl(url));
+    const invalidUrls = input.urls.filter((url) => !isDocsUrl(url));
     if (invalidUrls.length > 0) {
       return {
         content: [
           {
             type: 'text',
-            text: `Invalid URLs: only mapbox.com documentation URLs are supported. Invalid: ${invalidUrls.join(', ')}`
+            text: `Invalid URLs: only https://docs.mapbox.com documentation URLs are supported. Invalid: ${invalidUrls.join(', ')}`
           }
         ],
         isError: true

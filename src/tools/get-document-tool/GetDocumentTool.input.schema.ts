@@ -8,7 +8,7 @@ export const GetDocumentSchema = z.object({
     .string()
     .url()
     .describe(
-      'URL of a Mapbox documentation page to fetch. Must be a mapbox.com URL (e.g. https://docs.mapbox.com/api/search/geocoding/).'
+      'URL of a Mapbox documentation page to fetch. Must be an https://docs.mapbox.com URL (e.g. https://docs.mapbox.com/api/search/geocoding/).'
     )
 });
 
