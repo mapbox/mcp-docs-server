@@ -1,12 +1,10 @@
 // Copyright (c) Mapbox, Inc.
 // Licensed under the MIT License.
 
-import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type {
   ReadResourceResult,
-  ServerNotification,
-  ServerRequest
-} from '@modelcontextprotocol/sdk/types.js';
+  ServerContext
+} from '@modelcontextprotocol/server';
 import type { HttpRequest } from '../../utils/types.js';
 import { docCache } from '../../utils/docCache.js';
 import { BaseResource } from '../BaseResource.js';
@@ -40,7 +38,7 @@ export class MapboxDocumentationResource extends BaseResource {
 
   public async readCallback(
     uri: URL,
-    _extra: RequestHandlerExtra<ServerRequest, ServerNotification>
+    _extra: ServerContext
   ): Promise<ReadResourceResult> {
     try {
       const LLMS_TXT_URL = 'https://docs.mapbox.com/llms.txt';
