@@ -2,7 +2,7 @@
 
 ### Breaking Changes
 
-- **MCP TypeScript SDK v2 (#46, same move as mapbox/mcp-server#296).** The server and the `/tools`, `/resources` and `/utils` exports now use `@modelcontextprotocol/server` 2.3.1 instead of `@modelcontextprotocol/sdk` 1.x. v2 is where new MCP features land.
+- **MCP TypeScript SDK v2 (#46, same move as mapbox/mcp-server#296).** The server and the `/tools`, `/resources` and `/utils` exports now use `@modelcontextprotocol/server` 2.4.0 instead of `@modelcontextprotocol/sdk` 1.x. v2 is where new MCP features land.
   - **For code that imports our tools or resources:** `installTo(server)` needs a v2 `McpServer`, so the hosted server has to move to v2 in the same release it picks this version up in. `getAllTools()`, `getAllResources()` and `installTo()` themselves are unchanged. Handlers get the v2 `ServerContext` instead of `RequestHandlerExtra`.
   - **Clients:** nothing changes. It still negotiates 2025-11-25 with current clients, and tool input schemas now go out as JSON Schema 2020-12.
   - **Mostly the codemod:** `npx @modelcontextprotocol/codemod v1-to-v2 .` did the import paths and context types. None of our tools have an output schema, so v2's stricter output validation doesn't affect us. `@modelcontextprotocol/client` is a dev dependency, used by `scripts/test-resources.ts` and the tests.
