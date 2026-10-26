@@ -3,13 +3,11 @@
 
 import {
   McpServer,
-  RegisteredTool
-} from '@modelcontextprotocol/sdk/server/mcp.js';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
-import {
+  RegisteredTool,
   CallToolResult,
-  ToolAnnotations
-} from '@modelcontextprotocol/sdk/types.js';
+  ToolAnnotations,
+  ServerContext
+} from '@modelcontextprotocol/server';
 import { z, ZodTypeAny } from 'zod';
 import { withToolSpan } from '../utils/tracing.js';
 
@@ -38,8 +36,7 @@ export abstract class BaseTool<
    */
   async run(
     rawInput: unknown,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _extra?: RequestHandlerExtra<any, any>
+    _extra?: ServerContext
   ): Promise<CallToolResult> {
     return withToolSpan(this.name, async (span) => {
       try {
@@ -96,7 +93,7 @@ export abstract class BaseTool<
       this.name,
       config,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (args: any, extra: any) => this.run(args, extra)
+      (args: any, ctx: any) => this.run(args, ctx)
     );
   }
 

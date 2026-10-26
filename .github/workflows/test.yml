@@ -32,6 +32,9 @@ jobs:
       - name: Spellcheck
         run: npm run spellcheck
 
+      - name: Typecheck src and tests
+        run: npm run typecheck
+
       - name: Compile typescript
         run: npm run build
 
