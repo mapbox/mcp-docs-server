@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.4.0-dev.1 - 2026-10-30
+
 ### Breaking Changes
 
 - **MCP TypeScript SDK v2 (#46, same move as mapbox/mcp-server#296).** The server and the `/tools`, `/resources` and `/utils` exports now use `@modelcontextprotocol/server` 2.4.0 instead of `@modelcontextprotocol/sdk` 1.x. v2 is where new MCP features land.
