@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.3.2 - 2026-11-03
+
 ## 0.4.0-dev.1 - 2026-10-30
 
 ### Breaking Changes
