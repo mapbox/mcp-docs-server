@@ -1,5 +1,12 @@
 ## Unreleased
 
+### Maintenance
+
+- **OpenTelemetry JS 3.x (#51, same move as mapbox/mcp-server#325).** `@opentelemetry/sdk-trace-base` is deprecated in every 2.x release and removed in 3.0, and the ox-security scan flags it (mapbox/mcp-server#319). The OpenTelemetry set moves to the 3.0 line: `sdk-trace` 3.0.0 replaces `sdk-trace-base`, along with `resources` 3.0.0, `sdk-node`, `instrumentation` and `exporter-trace-otlp-http` 0.300.0, `auto-instrumentations-node` 0.82.0 and `api` 1.10.0.
+  - **Code:** the console exporter is now imported from `sdk-trace`.
+  - **Node:** `engines` is now `>=22.15.0`, the 3.x minimum (it was `>=22`).
+  - **Checked:** the built server (ESM and CommonJS) sent `tool.search_mapbox_docs_tool` and its undici `GET` spans to a local OTLP endpoint.
+
 ## 0.3.2 - 2026-11-03
 
 ## 0.4.0-dev.1 - 2026-10-30
