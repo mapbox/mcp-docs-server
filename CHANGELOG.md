@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 0.4.0 - 2026-11-11
+
 ### Maintenance
 
 - **Security updates for dependencies (#52).** Clears the open Dependabot alert on `zod`. `npm audit --omit=dev` now finds nothing.
